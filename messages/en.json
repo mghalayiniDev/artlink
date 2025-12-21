@@ -1,0 +1,18 @@
+{
+    "header": {
+        "home": "Home",
+        "shop": "Shop",
+        "about_us": "About Us",
+        "categories": "Categories",
+        "headers": {
+            "header_one": "Strong & Durable Doors",
+            "header_two": "Custom Solutions",
+            "header_three": "Reliable Delivery"
+        },
+        "sign-in": "Sign in",
+        "search": "Search for products"
+    },
+    "logo": {
+        "main": "Artlink"
+    }
+}
