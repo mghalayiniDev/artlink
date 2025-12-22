@@ -20,7 +20,7 @@ html[dir="rtl"] h3,
 html[dir="rtl"] h4,
 html[dir="rtl"] h5,
 html[dir="rtl"] h6 {
-    font-family: var(--font-amiri), var(--font-cairo), serif;
+    font-family: var(--font-cairo), serif;
 }
 
 @theme inline {
@@ -140,4 +140,24 @@ html[dir="rtl"] h6 {
   body {
     @apply bg-background text-foreground;
     }
+}
+
+@keyframes progress {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(0%); }
+}
+@keyframes progressAr {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(0%); }
+}
+.writing-vertical {
+    writing-mode: vertical-rl;
+}
+.animate-progress {
+    width: 100%;
+    animation: progress linear forwards;
+}
+.animate-progressAr {
+    width: 100%;
+    animation: progressAr linear forwards;
 }

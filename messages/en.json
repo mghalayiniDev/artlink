@@ -14,5 +14,25 @@
     },
     "logo": {
         "main": "Artlink"
+    },
+   "heroCarousel": {
+        "one": {
+            "title": "Architectural Pivot Masterpieces",
+            "subtitle": "Engineered for Prestige & Presence",
+            "description": "Exquisite pivot doors combining advanced engineering and premium materials for distinguished spaces."
+        },
+        "two": {
+            "title": "Refined Interior Door Collections",
+            "subtitle": "Designed for Elegant Living",
+            "description": "Sophisticated interior doors featuring clean lines and refined finishes for a sense of luxury."
+        },
+        "three": {
+            "title": "Luxury Exterior Entrances",
+            "subtitle": "A Statement from the First Look",
+            "description": "High-performance exterior doors built for security and style—creating unforgettable first impressions."
+        },
+        "btn": "Explore our doors",
+        "subbtn": "Learn more",
+        "side": "Premium Quality"
     }
 }
