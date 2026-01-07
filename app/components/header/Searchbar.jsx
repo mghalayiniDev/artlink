@@ -1,26 +1,80 @@
 "use client"
 
+import { products } from "@/sample"
+import { AnimatePresence, motion } from "framer-motion"
 import { Search } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
+import Image from "next/image"
+import Link from "next/link"
+import { useEffect, useState } from "react"
+import SearchResult from "./searchbar/searchResult"
 
-export default function Searchbar({ ref }) {
+export default function Searchbar() {
+    const [searchQuery, setSearchQuery] = useState('') 
+    const [isSearchFocused, setIsSearchFocused] = useState(false)
     const locale = useLocale()
     const t = useTranslations("header")
 
+    const filteredProducts = searchQuery.trim ()
+        ? products.filter(product =>
+            product.name["en"].toLocaleLowerCase().includes(searchQuery.toLocaleLowerCase()) ||
+            product.name["ar"].toLocaleLowerCase().includes(searchQuery.toLocaleLowerCase())
+        ) : []
+
+    useEffect(() => {
+        if (!isSearchFocused) {
+            setSearchQuery('')
+        }
+    }, [isSearchFocused])
+
+    useEffect(() => {
+        let ticking = false
+        const handleScroll = () => {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    if (window.scrollY > 80 && isSearchFocused) {
+                        setIsSearchFocused(false)
+                        setSearchQuery('')
+                    }
+                    ticking = false
+                })
+                ticking = true
+            }
+        }
+        window.addEventListener("scroll", handleScroll)
+        return () => window.removeEventListener("scroll", handleScroll)
+    }, [isSearchFocused])
+
     return (
-        <div className="relative w-full max-w-170" ref={ref}>
-            <div className="relative border rounded-sm w-full bg-white">
+        <div className="flex relative w-full">
+            <div className="relative w-full">
                 <input 
                     type="text"
-                    placeholder={t("search")}
-                    className="px-5 py-2.75 md:py-2 text-[0.825rem] md:text-[0.9rem] w-full font-medium"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setIsSearchFocused(true)}
+                    onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                    placeholder={t('search')}
+                    className={`w-full h-10 px-4 ${locale === "ar" ? "pl-10" : "pr-10"} py-2 border border-foreground bg-transparent text-foreground placeholder:text-muted-foreground 
+                    placeholder:uppercase placeholder:text-xs focus:outline-none focus:ring-1 focus:ring-foreground font-mono font-semibold`}
                 />
-                <Search 
-                    width={15}
-                    height={15}
-                    className={`absolute top-[50%] translate-y-[-50%] ${locale === "ar" ? "left-6" : "right-6"} text-gray-600`}
-                />
+                <Search className={`absolute ${locale === "ar" ? "left-3" : "right-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
             </div>
+            <AnimatePresence>
+                {(isSearchFocused && filteredProducts.length > 0) && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 4 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute top-full left-0 right-0 mt-1 bg-background border border-foreground z-50 max-h-60 overflow-y-auto overflow-x-hidden"
+                    >
+                        {filteredProducts.map((product, idx) => (
+                            <SearchResult product={product} key={idx} />
+                        ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     )
 }

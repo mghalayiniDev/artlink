@@ -34,5 +34,66 @@
         "btn": "Explore our doors",
         "subbtn": "Learn more",
         "side": "Premium Quality"
+    },
+    "auth": {
+        "quote": "Architecture begins where two bricks are put carefully together. Art begins when you realize a door is more than just an entrance—it is the first impression of a soul.",
+        "loading": "If the page doesn't load within 5 seconds, please refresh",
+        "stats": {
+            "years": "Years of Excellence",
+            "clients": "Happy Clients",
+            "designs": "Unique Designs",
+            "k": "K"
+        },
+        "signIn": {
+            "header": "Welcome Back",
+            "desc": "Sign in to access your account",
+            "action": "Sign In",
+            "googleConnc": "Sign in with Google",
+            "appleConnc": "Sign in with Apple",
+            "signUp": "Don't have an account?",
+            "signUpAc": "Sign up",
+            "verifHeader": "Enter verification code"
+        },
+        "signUp": {
+            "header": "Create Account",
+            "desc": "Join us to explore our premium door collection",
+            "action": "Create Account",
+            "googleConnc": "Sign up with Google",
+            "appleConnc": "Sign up with Apple",
+            "login": "Already have an account?",
+            "loginAc": "Login",
+            "continueHeader": "Missing fields",
+            "continueDesc": "Please complete the required information below",
+            "verifyHeader": "Verify your email",
+            "verifyDesc": "We've sent a 6-digit verification code to your inbox",
+            "verifyBtn": "Verify email"
+        },
+        "lables": {
+            "firstName": "First name",
+            "lastName": "Last name",
+            "email": "Email",
+            "password": "Password",
+            "verifyCode": "Verification code"
+        },
+        "placeholders": {
+            "firstName": "Enter your first name",
+            "lastName": "Enter your last name",
+            "email": "Enter your email",
+            "password": "Enter your password",
+            "verifyCode": "Enter verification code"
+        },
+        "or": "or",
+        "features": {
+            "quality": "Premium Quality",
+            "delivery": "Fast Delivery",
+            "warranty": "10 Year Warranty"
+        },
+        "required": "required",
+        "resendVerifCode": "Resend code in {resendableAfter} second(s)",
+        "resendVerifBtn": "Didn't recieve a code? Resend code"
+    },
+    "categories": {
+        "subheader": "Browse by Category",
+        "header": "Categories"
     }
 }
