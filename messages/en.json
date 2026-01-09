@@ -95,5 +95,22 @@
     "categories": {
         "subheader": "Browse by Category",
         "header": "Categories"
+    },
+    "whyChooseUs": {
+        "tag": "Why Artlink",
+        "title": "Crafting",
+        "title2": "Perfection",
+        "desc": "Redefining premium door manufacturing with years of expertise and an unwavering commitment to excellence",
+        "years": "Years",
+        "projects": "Projects",
+        "satisfaction": "Satisfaction",
+        "qualityTitle": "Quality assured",
+        "qualityDesc": "We use finest craftsmanship to ensure every door meets",
+        "customTitle": "Custom design",
+        "customDesc": "Bespoke solutions tailored to your architectural vision",
+        "deliveryTitle": "UAE Delivery",
+        "deliveryDesc": "Free delivery and installation across the Emirates",
+        "valueTitle": "Exceptional value",
+        "valueDesc": "Quality doors at competitive prices for clients"
     }
 }

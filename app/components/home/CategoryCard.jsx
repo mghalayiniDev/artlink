@@ -42,12 +42,8 @@ export default function CategoryCard({ cat, height=null, index, span }) {
             {/* Text - Outlined */}
             <div className="absolute inset-0 flex items-center justify-center z-30">
                 <span
-                    className="font-extrabold text-[3rem] md:text-[3.125rem] lg:text-[2.65rem] uppercase tracking-tighter 
+                    className="font-extrabold text-[3rem] md:text-[3rem] lg:text-[2.25rem] uppercase tracking-tighter 
                     text-center px-4 transition-colors duration-300 font-mono text-white"
-                    style={{
-                        WebkitTextStroke: locale !== "ar" && '2px white',
-                        color: locale !== "ar" && 'transparent',
-                    }}
                 >
                     {cat.name[locale] || cat.name['en']}
                 </span>
