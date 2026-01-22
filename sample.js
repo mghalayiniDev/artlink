@@ -201,7 +201,7 @@ export const products = [
       price: 2100,
       name: { en: 'Textured WPC Door', ar: 'باب WPC بنقشة خشبية' },
       description: { en: 'WPC door with natural wood grain texture.', ar: 'باب WPC بملمس خشب طبيعي.' },
-      features: [{ icon: Hammer, en: 'Impact resistant', ar: 'مقاوم للصدمات' }],
+      features: [{ icon: Hammer, en: 'Impact resistant', ar: 'مقاوم للصدمات',  }],
       images: ['https://images.unsplash.com/photo-1591187883094-9862ad89e3f4?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D']
     },
     {

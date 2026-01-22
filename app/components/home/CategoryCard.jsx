@@ -40,10 +40,10 @@ export default function CategoryCard({ cat, height=null, index, span }) {
             />
 
             {/* Text - Outlined */}
-            <div className="absolute inset-0 flex items-center justify-center z-30">
+            <div className="absolute inset-0 flex items-center justify-center z-30 p-6">
                 <span
-                    className="font-extrabold text-[3rem] md:text-[3rem] lg:text-[2.25rem] uppercase tracking-tighter 
-                    text-center px-4 transition-colors duration-300 font-mono text-white"
+                    className="font-extrabold text-[2.75rem] lg:text-[2.25rem] uppercase tracking-tighter 
+                    text-center transition-colors duration-300 font-mono text-white"
                 >
                     {cat.name[locale] || cat.name['en']}
                 </span>

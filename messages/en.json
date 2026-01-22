@@ -112,5 +112,21 @@
         "deliveryDesc": "Free delivery and installation across the Emirates",
         "valueTitle": "Exceptional value",
         "valueDesc": "Quality doors at competitive prices for clients"
+    },
+    "productcategory": {
+        "viewAll": "View All Products",
+        "quickView": "Quick View",
+        "currency": "AED"
+    },
+    "process": {
+        "sub": "How it works",
+        "title1": "From vision",
+        "title2": "To reality",
+        "step1Title": "Consultation",
+        "step1Desc": "Collaborate with our experts to select the perfect door design and materials for your project.",
+        "step2Title": "Design & Craft",
+        "step2Desc": "Our skilled artisans meticulously craft each door to your exact specifications, ensuring superior quality.",
+        "step3Title": "Delivery & Install",
+        "step3Desc": "We provide prompt delivery and professional installation services across the UAE."
     }
 }

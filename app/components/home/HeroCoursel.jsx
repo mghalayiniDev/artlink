@@ -19,7 +19,7 @@ export default function HeroCoursel() {
             title: t("one.title"),
             subtitle: t("one.subtitle"),
             description: t("one.description"),
-            image: "/hero-bg-three.jpg"
+            image: "/hero-bg-one.jpg"
         },
         {
             title: t("two.title"),
@@ -31,7 +31,7 @@ export default function HeroCoursel() {
             title: t("three.title"),
             subtitle: t("three.subtitle"),
             description: t("three.description"),
-            image: "/hero-bg-one.jpg"
+            image: "/hero-bg-three.jpg"
         }
     ]
 
@@ -96,13 +96,13 @@ export default function HeroCoursel() {
                         className="w-full h-full object-cover select-none"
                     />
                     {/* Dark Overlay */}
-                    <div className="absolute inset-0 bg-foreground/52"></div>
+                    <div className="absolute inset-0 bg-foreground/70"></div>
                 </motion.div>
             </AnimatePresence>
 
             {/* Corner Decorative Elements */}
             <div className="absolute top-8 left-8 w-16 h-16 border-l border-t border-background/30"></div>
-            <div className="absolute bottom-8 left-8 w-16 h-16 border-l border-b border-background/30"></div>
+            <div className="absolute bottom-8 left-8 w-16 h-16 border-l border-b border-background/30 md:hidden"></div>
             <div className="absolute top-8 right-8 w-16 h-16 border-r border-t border-background/30"></div>
             <div className="absolute bottom-8 right-8 w-16 h-16 border-r border-b border-background/30"></div>
 
