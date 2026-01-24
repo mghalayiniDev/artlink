@@ -128,5 +128,36 @@
         "step2Desc": "Our skilled artisans meticulously craft each door to your exact specifications, ensuring superior quality.",
         "step3Title": "Delivery & Install",
         "step3Desc": "We provide prompt delivery and professional installation services across the UAE."
+    },
+    "testimonial": {
+        "sub": "Testimonials",
+        "title": "What Clients Say",
+        "testimonial1": "Thank you to Art Link Doors! The doors are beautiful, strong, and incredibly luxurious. The company is distinguished by its cooperative and hardworking employees. I highly recommend them to everyone.",
+        "name1": "Ahmad Fares",
+        "testimonial2": "I dealt with them on WPC and aluminum exterior doors. Honestly, their work is clean and neat, the material is excellent, and the installation is quick and hassle-free. I recommend them.",
+        "name2": "Mohamad Bardji"
+    },
+    "cta": {
+        "title": "Transform your",
+        "title2": "Space Today",
+        "shopButton": "Shop for doors"
+    },
+    "footer": {
+        "desc": "Premium architectural doors crafted for those who demand excellence in every detail",
+        "emailPlaceholder": "Your email",
+        "categories": "Categories",
+        "company": "Company",
+        "home": "Home",
+        "AboutUs": "About Us",
+        "shop": "Shop",
+        "contact": "Contact",
+        "privacy": "Privacy policy",
+        "industries": "Industries",
+        "residential": "Residential",
+        "commercial": "Commercial",
+        "hotels": "Hotels & Resorts",
+        "offices": "Offices",
+        "villas": "Villas",
+        "rights": "© {date} Artlink. All rights reserved"
     }
 }
