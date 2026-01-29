@@ -11,7 +11,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { useIsMidScreen } from "@/hooks/useIsMidScreen"
 import { categories } from "@/sample"
 import { Authenticated, AuthLoading, Unauthenticated } from "convex/react"
-import { UserProfile } from "@clerk/clerk-react"
+import { UserButton, UserProfile } from "@clerk/clerk-react"
 import { usePathname } from "next/navigation"
 
 export default function Navbar() {
@@ -150,7 +150,7 @@ export default function Navbar() {
                             </Link>
                         </Unauthenticated>
                         <Authenticated>
-                            <UserProfile />
+                            <UserButton />
                         </Authenticated>
                         <AuthLoading>
                             <Loader

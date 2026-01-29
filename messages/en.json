@@ -159,5 +159,21 @@
         "offices": "Offices",
         "villas": "Villas",
         "rights": "© {date} Artlink. All rights reserved"
+    },
+    "shop": {
+        "explore": "Explore Collection",
+        "header": "Our Doors",
+        "desc": "Discover our complete range of premium architectural doors, crafted with precision and designed for excellence",
+        "filters": "Filters",
+        "category": "Category",
+        "priceRange": "Price Range"
+    },
+    "admin": {
+        "dashboard": "Dashboard",
+        "categories": "Categories",
+        "products": "Products",
+        "users": "Users",
+        "orders": "Orders",
+        "notifications": "Notifications"
     }
 }

@@ -23,7 +23,7 @@ export default function Languagedropdown({ color="white" }) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger 
-                className={`flex items-center gap-4.5 cursor-pointer text-white 
+                className={`flex items-center gap-3 cursor-pointer text-white 
                 focus:outline-0 ${locale === "ar" ? "mr-auto" : "ml-auto"}`}
             >
                 <Image 
@@ -34,7 +34,7 @@ export default function Languagedropdown({ color="white" }) {
                 />
                 <span 
                     className={`uppercase font-medium ${locale === "ar" ? "text-sm" : "text-xs"}`}
-                    style={{ fontFamily: `var(--${currentLang.font})` }}
+                    style={{ fontFamily: `var(--${currentLang.font})`, color: color }}
                 >
                     {currentLang.name}
                 </span>

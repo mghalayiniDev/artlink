@@ -159,5 +159,13 @@
         "offices": "المكاتب",
         "villas": "الفلل",
         "rights": "© {date} آرت لينك. جميع الحقوق محفوظة"
+    },
+    "admin": {
+        "dashboard": "لوحة القيادة",
+        "categories": "الفئات",
+        "products": "المنتجات",
+        "users": "المستخدمين",
+        "orders": "الطلبات",
+        "notifications": "الإشعارات"
     }
 }
