@@ -1,20 +1,28 @@
 "use client"
 
-import { categories, products } from "@/sample"
 import ProductCategoryCard from "./ProductCategoryCard"
 
-export default function ProductGallery() {
+export default function ProductGallery({ categories, categoriesLoading, categoriesError }) {
+    if (categoriesLoading) return null
+    if (categoriesError || categories?.length === 0) return null
+
+    const validPairs = categories.filter(item => {
+        return item.products && item.products.length >= 2
+    })
+
+    if (validPairs.length < 2) return null 
+
     return (
-        (categories.length > 0 && products.length) && (
-            <section>
-                {categories.slice(0, 4).map((category, idx) => (
-                    <ProductCategoryCard 
-                        category={category}
-                        idx={idx}
-                        key={idx}
-                    />
-                ))}
-            </section>
-        )
+        <section>
+            {validPairs.slice(0, 4).map((item, idx) => (
+                <ProductCategoryCard 
+                    key={item.category._id} 
+                    idx={idx}
+                    category={item.category}
+                    products={item.products}
+                    length={validPairs.length}
+                />
+            ))}
+        </section>
     )
 }

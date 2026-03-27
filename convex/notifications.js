@@ -15,17 +15,27 @@ export const notifyAdmins = internalMutation({
         type: v.union(
             v.literal("order_status"), 
             v.literal("promotion"), 
-            v.literal("alert")
+            v.literal("alert"),
+            v.literal("inventory")
         )
     },
     handler: async (ctx, args) => {
+        const searchTexts = [
+            args.title.en,
+            args.title.ar,
+            args.body.en,
+            args.body.ar,
+            args.userId
+        ].join(" ").toLowerCase()
+
         // Insert into notifcations
         await ctx.db.insert("notifications", {
             userId: args.userId,
             title: args.title,
             body: args.body,
             type: args.type,
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            searchTexts: searchTexts
         })
     }
 })

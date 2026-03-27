@@ -25,9 +25,9 @@ export default function AdminSidebar() {
             label: t("dashboard")
         },
         {
-            path: '/admin/notifications',
-            icon: Bell,
-            label: t("notifications")
+            path: '/admin/users',
+            icon: Users,
+            label: t("users")
         },
         {
             path: '/admin/categories',
@@ -40,21 +40,21 @@ export default function AdminSidebar() {
             label: t("products")
         },
         {
-            path: '/admin/users',
-            icon: Users,
-            label: t("users")
-        },
-        {
             path: '/admin/orders',
             icon: ShoppingCart,
             label: t("orders")
-        }
+        },
+        {
+            path: '/admin/notifications',
+            icon: Bell,
+            label: t("notifications")
+        },
     ]
 
     return (
         <aside
             className={`h-screen bg-white sticky top-0 flex flex-col transition-all
-            duration-300 ease-in-out border-r ${(collapsed || isMid) ? "w-17 lg:w-18" : "w-70"}`}
+            duration-300 ease-in-out border-r ${(collapsed || isMid) ? "w-17 lg:w-18" : "w-62 xl:w-70"}`}
             dir="ltr"
         >
             {/* Logo */}
@@ -79,7 +79,7 @@ export default function AdminSidebar() {
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 px-4 py-5 space-y-3">
+            <nav className="flex-1 px-4 py-6 space-y-2">
                 {navItems.map((item, idx) => {
                     const isActive = pathname === item.path
                     return (

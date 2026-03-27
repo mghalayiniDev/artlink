@@ -33,18 +33,6 @@ export default function WhyChooseUs() {
 
     return (
         <section className="-full bg-foreground py-16 md:py-24 relative overflow-hidden">
-            {/* Grid Overlay */}
-            <div 
-                className="absolute inset-0 opacity-5"
-                style={{
-                backgroundImage: `
-                    linear-gradient(to right, white 1px, transparent 1px),
-                    linear-gradient(to bottom, white 1px, transparent 1px)
-                `,
-                backgroundSize: '40px 40px',
-                }}
-            />
-
             <ContentWrapper className="relative z-10">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
                     {/* Left - Text Content */}

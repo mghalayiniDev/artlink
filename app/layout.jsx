@@ -3,6 +3,7 @@ import { getLocale, getMessages } from "next-intl/server"
 import { amiri, cairo, inter, jetBrainsMono, playfairDisplay } from '@/fonts'
 import Providers from "./components/Providers"
 import "./globals.css"
+import { Toaster } from 'sonner'
 
 export const metadata = {
     title: "Art Link Premium Doors",
@@ -32,6 +33,10 @@ export default async function RootLayout({ children }) {
                         {children}
                     </NextIntlClientProvider>
                 </Providers>
+                <Toaster 
+                    position='top-center'
+                    className='shadow-none'
+                />
             </body>
         </html>
     )

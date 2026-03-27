@@ -1,53 +1,54 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { useLocale } from "next-intl"
-import { useState } from "react"
+import { ArrowRight } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
+import Link from "next/link"
 
-export default function CategoryCard({ cat, height=null, index, span }) {
-    const [hover, setOnHover] = useState(false)
+const bgColors = [
+    "from-[#1c2840]/80",  
+    "from-foreground/70", 
+    "from-[#1c2840]/80", 
+]
+
+export default function CategoryCard({ index, category, totalColumns }) {
     const locale = useLocale()
+    const t = useTranslations("categories")
+
+    const gradientColor = bgColors[index % bgColors.length]
 
     return (
-        <motion.a
-            href={`/shop?category=${cat.id}`}
-            className={`relative overflow-hidden cursor-pointer group ${span} ${height}`}
-            initial={{ opacity: 0, y: 30 }}
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: index * 0.1 }}
-            onHoverStart={() => setOnHover(true)}
-            onHoverEnd={() => setOnHover(false)}
+            transition={{ duration: 0.4, delay: index * 0.08 }}
+            className={totalColumns >= 3 && index === 2 ? "md:col-span-2 lg:col-span-1" : ""}
         >
-            {/* Image */}
-            <motion.img 
-                src={cat.image}
-                alt={cat.name[locale] || cat.name['en']}
-                className="absolute inset-0 w-full h-full object-cover"
-                animate={{ scale: hover ? 1.05 : 1 }}
-                transition={{ duration: 0.4 }}
-            />
-
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-foreground/35" />
-            
-            {/* Hover Border */}
-            <motion.div
-                className="absolute inset-2 border border-background pointer-events-none"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: hover ? 1 : 0 }}
-                transition={{ duration: 0.3 }}
-            />
-
-            {/* Text - Outlined */}
-            <div className="absolute inset-0 flex items-center justify-center z-30 p-6">
-                <span
-                    className="font-extrabold text-[2.75rem] lg:text-[2.25rem] uppercase tracking-tighter 
-                    text-center transition-colors duration-300 font-mono text-white"
-                >
-                    {cat.name[locale] || cat.name['en']}
-                </span>
-            </div>
-        </motion.a>
+            <Link
+                href={`/shop?category=${category.category._id}`}
+                className="group relative rounded-xl overflow-hidden block min-h-[38vh]" 
+            >
+                <img 
+                    src={category.category.thumbnail} 
+                    alt={category.category.name[locale] || category.category.name["en"]} 
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                />
+                <div className={`absolute inset-0 bg-linear-to-t ${gradientColor} to-transparent`} />
+                <div className="absolute bottom-0 left-0 right-0 p-6 flex items-end justify-between">
+                    <div>
+                        <span className="block font-bold text-background text-[1.425rem]">
+                            {category.category.name[locale]|| category.name["en"]}
+                        </span>
+                        <p className="text-xs text-background/60">
+                            {category.totalCount} {category.totalCount === 1 ? t("product") : t("products")}
+                        </p>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-background/20 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ArrowRight size={14} className="text-background" />
+                    </div>
+                </div>
+            </Link>
+        </motion.div>
     )
 }

@@ -1,5 +1,5 @@
 import { v } from "convex/values"
-import { internalMutation } from "./_generated/server"
+import { internalMutation, internalQuery } from "./_generated/server"
 import { internal } from "./_generated/api"
 
 export const upsertFromClerk = internalMutation({
@@ -27,7 +27,7 @@ export const upsertFromClerk = internalMutation({
             })
 
             if (roleChanged) {
-                await ctx.db.insert("notifications", {
+                await ctx.runMutation(internal.notifications.notifyAdmins, {
                     userId: args.userId,
                     title: {
                         en: "Security: Role Updated 🔐",
@@ -38,7 +38,6 @@ export const upsertFromClerk = internalMutation({
                         ar: `تم تغيير صلاحيات ${args.name} من [${existingUser.role}] إلى [${args.role}].`
                     },
                     type: "alert",
-                    createdAt: Date.now()
                 })
             }
         } else {
@@ -49,6 +48,8 @@ export const upsertFromClerk = internalMutation({
                 imageURL: args.imageURL,
                 role: args.role,
                 likedProducts: [],
+                orders: [],
+                cart: []
             })
         }
     }
@@ -71,7 +72,7 @@ export const deleteFromClerk = internalMutation({
             })
 
             // 3. Notify Admins
-            await ctx.db.insert("notifications", {
+            await ctx.runMutation(internal.notifications.notifyAdmins, {
                 userId: args.userId,
                 title: {
                     en: "User Account Removed 🗑️",
@@ -82,11 +83,22 @@ export const deleteFromClerk = internalMutation({
                     ar: `تم حذف المستخدم ${user.name} (${user.email}).`
                 },
                 type: "alert",
-                createdAt: Date.now()
             })
 
             // 4. FINALLY, delete the user record
             await ctx.db.delete(user._id)
         }
+    }
+})
+
+export const isAdmin = internalQuery({
+    args: { userId: v.string() },
+    handler: async (ctx, args) => {
+        const user = await ctx.db
+        .query("users")
+        .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
+        .unique()
+        
+        return user?.role === "admin"
     }
 })

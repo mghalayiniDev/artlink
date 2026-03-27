@@ -12,7 +12,7 @@ export default function SearchResult({ product }) {
 
     return (
         <Link
-            href={`/product/${product.id}`}
+            href={`/product/${product._id}`}
             className="flex items-center justify-between px-4 py-3 hover:bg-neutral-100 transition-colors border-b border-foreground/10 last:border-0 gap-4"
         >
             <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -21,8 +21,8 @@ export default function SearchResult({ product }) {
                         <Skeleton className="absolute inset-0 w-full h-full" />
                     )}
                     <Image 
-                        src={product.images[0]}
-                        alt={product.name[locale]}
+                        src={product.thumbnail}
+                        alt={product.name[locale] || product.name["en"]}
                         fill
                         sizes="48px"
                         className={`object-cover transition-opacity duration-300 ${
@@ -32,7 +32,7 @@ export default function SearchResult({ product }) {
                     />
                 </div>
                 <span className="text-[0.8rem] font-semibold text-foreground truncate whitespace-nowrap">
-                    {product.name[locale]}
+                    {product.name[locale] || product.name["en"]}
                 </span>
             </div>
             <div className="text-xs font-mono font-bold text-gray-600 shrink-0">

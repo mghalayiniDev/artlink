@@ -1,16 +1,25 @@
+"use client"
+
 import { setUserLocale } from "@/actions/locale"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { languages } from "@/constants"
 import { ChevronDown, Globe } from "lucide-react"
 import { useLocale } from "next-intl"
 import Image from "next/image"
-import { useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 
 export default function Languagedropdown({ color="white" }) {
     const locale = useLocale()
     const [isPending, startTransition] = useTransition()
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const handleLanguageChange = (newLocale) => {
+        if (newLocale === locale) return
+
         startTransition(async () => {
             await setUserLocale(newLocale)
             window.location.reload()
@@ -20,9 +29,12 @@ export default function Languagedropdown({ color="white" }) {
     const currentLang = languages.find((lang) => lang.id === locale) 
         || languages.find((lang) => lang.id === "en")
 
+    if (!mounted) return <div className="w-20 h-5" />
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger 
+                disabled={isPending}
                 className={`flex items-center gap-3 cursor-pointer text-white 
                 focus:outline-0 ${locale === "ar" ? "mr-auto" : "ml-auto"}`}
             >

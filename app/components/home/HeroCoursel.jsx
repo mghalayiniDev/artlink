@@ -182,7 +182,7 @@ export default function HeroCoursel() {
                             </Link>
 
                             <Link
-                                href="#about"
+                                href="/about"
                                 className="px-8 py-4 border border-background text-background font-bold uppercase tracking-wider text-sm hover:bg-background hover:text-foreground transition-colors md:max-w-57.5 text-center w-full"
                             >
                                 {t('subbtn')}

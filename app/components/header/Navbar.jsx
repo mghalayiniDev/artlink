@@ -9,10 +9,10 @@ import { useEffect, useRef, useState } from "react"
 import { ChevronDown, Loader, Menu, X } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useIsMidScreen } from "@/hooks/useIsMidScreen"
-import { categories } from "@/sample"
-import { Authenticated, AuthLoading, Unauthenticated } from "convex/react"
-import { UserButton, UserProfile } from "@clerk/clerk-react"
+import { Authenticated, AuthLoading, Unauthenticated, useQuery } from "convex/react"
+import { UserButton, useUser } from "@clerk/clerk-react"
 import { usePathname } from "next/navigation"
+import { api } from "@/convex/_generated/api"
 
 export default function Navbar() {
     const t = useTranslations("header")
@@ -22,12 +22,19 @@ export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const categoriesRef = useRef(null)
     const locale = useLocale()
+    const { user } = useUser()
+    const isAdmin = user?.publicMetadata?.role === "admin"
+
+    const categories = useQuery(api.categories.getAllCategories)
+    const categoriesLoading = categories === undefined
+    const categoriesError = categories === null
 
     const navLinks = [
         { label: t("home"), href: "/" },
         { label: t("shop"), href: "/shop" },
-        { label: t("about_us"), href: "/about" }
-    ]
+        { label: t("about_us"), href: "/about" },
+        isAdmin && { label: t("admin"), href: "/admin" }
+    ].filter(Boolean)
 
     useEffect(() => {
         if (!isMid) {
@@ -76,8 +83,8 @@ export default function Navbar() {
                 </div>
 
                 {/* Desktop Navigation */}
-                <div className="flex items-center gap-6 shrink-0">
-                    <div className="hidden lg:flex items-center gap-6">
+                <div className="flex items-center gap-4.25 shrink-0">
+                    <div className="hidden lg:flex items-center gap-4">
                         {navLinks.map((link, idx) => (
                             <Link
                                 href={link.href}
@@ -90,53 +97,56 @@ export default function Navbar() {
                         ))}
                     </div>
                     {/* Categories Dropdown */}
-                    <div
-                        ref={categoriesRef}
-                        className="relative flex items-center h-full"
-                        onMouseEnter={() => setIsCategoriesOpen(true)}
-                        onMouseLeave={() => setIsCategoriesOpen(false)}
-                        onFocus={() => setIsCategoriesOpen(true)} 
-                        onBlur={(e) => {
-                            if (!e.currentTarget.contains(e.relatedTarget)) {
-                                setIsCategoriesOpen(false)
-                            }
-                        }}
-                    >
-                        <button 
-                            className="text-[0.8rem] xl:text-sm font-bold uppercase tracking-wide text-foreground 
-                            transition-colors hover:text-[#d7803a] cursor-pointer items-center gap-2 hidden lg:flex"
-                            aria-expanded={isCategoriesOpen}
-                            aria-haspopup="true"
+                    {(!categoriesLoading && !categoriesError && (categories && categories.length > 0)) && (
+                        <div
+                            ref={categoriesRef}
+                            className="relative flex items-center h-full"
+                            onMouseEnter={() => setIsCategoriesOpen(true)}
+                            onMouseLeave={() => setIsCategoriesOpen(false)}
+                            onFocus={() => setIsCategoriesOpen(true)} 
+                            onBlur={(e) => {
+                                if (!e.currentTarget.contains(e.relatedTarget)) {
+                                    setIsCategoriesOpen(false)
+                                }
+                            }}
                         >
-                            {t('categories')}
-                            <ChevronDown className="w-3.75 h-3.75" />
-                        </button>
-                        <AnimatePresence>
-                            {(!isMid && isCategoriesOpen) && (
-                                <>
-                                    <div className="absolute top-full right-0 z-0 w-full h-9" />
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 4 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: 4 }}
-                                        transition={{ duration: 0.15 }}
-                                        className="absolute top-9 right-0 bg-background border border-foreground z-50 min-w-50 max-h-50 overflow-y-auto"
-                                    >
-                                        {categories.map((category) => (
-                                            <Link
-                                                key={category.id}
-                                                href={`/shop?category=${category.id}`}
-                                                className="block px-5 py-3 text-[0.8rem] font-bold uppercase text-foreground hover:bg-neutral-100 
-                                                hover:text-[#d7803a] transition-colors border-b border-foreground/10 last:border-0 font-mono"
-                                            >
-                                                {category.name[locale]}
-                                            </Link>
-                                        ))}
-                                    </motion.div>
-                                </>
-                            )}
-                        </AnimatePresence>
-                    </div>
+                            <button 
+                                className="text-[0.8rem] xl:text-sm font-bold uppercase tracking-wide text-foreground 
+                                transition-colors hover:text-[#d7803a] cursor-pointer items-center gap-1.25 hidden lg:flex"
+                                aria-expanded={isCategoriesOpen}
+                                aria-haspopup="true"
+                            >
+                                {t('categories')}
+                                <ChevronDown className="w-3.75 h-3.75" />
+                            </button>
+                            
+                            <AnimatePresence>
+                                {(!isMid && isCategoriesOpen) && (
+                                    <>
+                                        <div className="absolute top-full right-0 z-0 w-full h-9" />
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 4 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 4 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="absolute top-9 right-0 bg-background border border-foreground z-50 min-w-50 max-h-50 overflow-y-auto"
+                                        >
+                                            {categories.map((category) => (
+                                                <Link
+                                                    key={category._id}
+                                                    href={`/shop?category=${category._id}`}
+                                                    className="block px-5 py-3 text-[0.8rem] font-bold uppercase text-foreground hover:bg-neutral-100 
+                                                    hover:text-[#d7803a] transition-colors border-b border-foreground/10 last:border-0 font-mono whitespace-nowrap"
+                                                >
+                                                    {category.name[locale] || category.name["en"]}
+                                                </Link>
+                                            ))}
+                                        </motion.div>
+                                    </>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    )}
 
                     {/* Actions */}
                     <div className="flex items-center gap-6 md:gap-8">
@@ -197,23 +207,25 @@ export default function Navbar() {
                             ))}
 
                             {/* Mobile Categories */}
-                            <div className="py-2">
-                                <span className="text-sm font-bold uppercase tracking-wide text-foreground">
-                                    {t('categories')}
-                                </span>
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                    {categories.map((category, idx) => (
-                                        <Link
-                                            key={idx}
-                                            className="px-3 py-2 border border-foreground/20 text-[0.785rem] text-foreground bold
-                                            hover:border-[#d7803a] hover:text-[#d7803a] transition-colors font-mono"
-                                            href={`/shop?category=${category.id}`}
-                                        >
-                                            {category.name[locale]}
-                                        </Link>
-                                    ))}
+                            {(!categoriesLoading && !categoriesError && (categories && categories.length > 0)) && (
+                                <div className="py-2">
+                                    <span className="text-sm font-bold uppercase tracking-wide text-foreground">
+                                        {t('categories')}
+                                    </span>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {categories.map((category, idx) => (
+                                            <Link
+                                                key={idx}
+                                                className="px-3 py-2 border border-foreground/20 text-[0.785rem] text-foreground bold
+                                                hover:border-[#d7803a] hover:text-[#d7803a] transition-colors font-mono"
+                                                href={`/shop?category=${category._id}`}
+                                            >
+                                                {category.name[locale] || category.name["en"]}
+                                            </Link>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </ContentWrapper>
                     </motion.div>
                 )}

@@ -1,15 +1,20 @@
 "use client"
 
 import { useLocale, useTranslations } from "use-intl"
-import ContentWrapper from "../ContentWrapper"
-import Logo from "../Logo"
-import { ArrowRight, Facebook, Instagram, Mail, MapPin, Phone } from "lucide-react"
-import { categories } from "@/sample"
+import ContentWrapper from "./ContentWrapper"
+import Logo from "./Logo"
+import { ArrowRight, Instagram, MapPin, Phone } from "lucide-react"
 import Link from "next/link"
+import { useQuery } from "convex/react"
+import { api } from "@/convex/_generated/api"
 
 export default function Footer() {
     const t = useTranslations("footer")
     const locale = useLocale()
+
+    const categories = useQuery(api.categories.getAllCategories)
+    const categoriesLoading = categories === undefined
+    const categoriesError = categories === null
 
     const footerLinks = {
         company: [
@@ -19,25 +24,16 @@ export default function Footer() {
             },
             {
                 name: t("AboutUs"),
-                href: "/about-us"
-            },
-            {
-                name: t("privacy"),
-                href: "/privacy"
+                href: "/about"
             },
             {
                 name: t("shop"),
                 href: "/shop"
-            },
-            {
-                name: t("contact"),
-                href: "/"
-            },
+            }
         ],
         industries: [
             t("residential"),
             t("commercial"),
-            t("hotels"),
             t("offices"),
             t("villas")
         ],
@@ -84,22 +80,24 @@ export default function Footer() {
                     </div>
 
                     {/* Products */}
-                    <div className="lg:mx-auto">
-                        <span className="block font-bold uppercase text-xs tracking-widest text-background mb-6">
-                            {t("categories")}
-                        </span>
-                        <ul className="space-y-3.25">
-                            {categories.slice(0, 5).map((category, idx) => (
-                                <Link
-                                    key={idx}
-                                    href={`/shop?category=${category.id}`}
-                                    className="text-background/60 text-[0.85rem] hover:text-background transition-colors block"
-                                >
-                                    {category.name[locale] || category.name["en"]}
-                                </Link>
-                            ))}
-                        </ul>
-                    </div>
+                    {((!categoriesLoading && !categoriesError && (categories && categories.length > 0)) && (
+                        <div className="lg:mx-auto">
+                            <span className="block font-bold uppercase text-xs tracking-widest text-background mb-6">
+                                {t("categories")}
+                            </span>
+                            <ul className="space-y-3.25">
+                                {categories.slice(0, 5).map((category, idx) => (
+                                    <Link
+                                        key={idx}
+                                        href={`/shop?category=${category._id}`}
+                                        className="text-background/60 text-[0.85rem] hover:text-background transition-colors block"
+                                    >
+                                        {category.name[locale] || category.name["en"]}
+                                    </Link>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
 
                     {/* Company */}
                     <div className="lg:mx-auto">
@@ -156,10 +154,24 @@ export default function Footer() {
                 </div>
 
                 {/* Bottom Bar */}
-                <div className="pt-10 pb-6">
+                <div className="pt-10 pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
                     <p className="text-background/40 text-sm">
                         {t("rights", { date: new Date().getFullYear() })}
                     </p>
+                    <div className="flex items-center gap-6">
+                        <Link
+                            href={"/privacy-policy"}
+                            className="text-background/40 text-[0.8rem] hover:text-white"
+                        >
+                            {t("privacy")}
+                        </Link>
+                        <Link
+                            href={"/terms-of-service"}
+                            className="text-background/40 text-[0.8rem] hover:text-white"
+                        >
+                            {t("terms")}
+                        </Link>
+                    </div>
                 </div>
             </ContentWrapper>
         </footer>

@@ -4,14 +4,16 @@ import { v } from "convex/values"
 export default defineSchema({
     categories: defineTable({
         updatedAt: v.number(),
+        searchTexts: v.string(),
         name: v.object({ en: v.string(), ar: v.string() }),
         description: v.object({ en: v.string(), ar: v.string() }),
         thumbnail: v.string(), 
         slug: v.string(),
     })
         .index("by_slug", ["slug"])
-        .searchIndex("search_name_en", { searchField: "name.en" })
-        .searchIndex("search_name_ar", { searchField: "name.ar" }),
+        .searchIndex("search_all", {
+            searchField: "searchTexts"
+        }),
 
     products: defineTable({
         categoryId: v.id("categories"),
@@ -22,24 +24,29 @@ export default defineSchema({
         price: v.number(), 
         discount: v.number(), 
         stock: v.number(),
-        status: v.union(v.literal("active"), v.literal("draft"), v.literal("archived")),
+        status: v.union(v.literal("active"), v.literal("draft")),
         details: v.object({
             material: v.object({ en: v.string(), ar: v.string() }),
             standardDimensions: v.string(),
-            weight: v.string()
+            weight: v.number()
         }),
+        searchTexts: v.string(),
         features: v.array(v.object({ en: v.string(), ar: v.string() })),
         colors: v.array(
             v.object({
                 code: v.string(),
                 name: v.object({ en: v.string(), ar: v.string() })
             })
-        )
+        ),
+        slug: v.string()
     })
         .index("by_category_id", ["categoryId"])
         .index("by_price", ["price"])
-        .searchIndex("search_name_en", { searchField: "name.en" })
-        .searchIndex("search_name_ar", { searchField: "name.ar" }),
+        .index("by_status", ["status"])
+        .index("by_category_status", ["categoryId", "status"])
+        .searchIndex("search_all", {
+            searchField: "searchTexts"
+        }),
 
     users: defineTable({
         userId: v.string(), 
@@ -47,10 +54,24 @@ export default defineSchema({
         role: v.union(v.literal("user"), v.literal("admin")),
         email: v.string(),
         likedProducts: v.array(v.id("products")),
-        imageURL: v.string()
+        imageURL: v.string(),
+        orders: v.array(
+            v.id("orders")
+        ),
+        cart: v.array(
+            v.object({
+                productId: v.id("products"),
+                quantity: v.number()
+            })
+        )
     })
         .index("by_user_id", ["userId"])
-        .index("by_email", ["email"]),
+        .index("by_email", ["email"])
+        .index("by_role", ["role"])
+        .searchIndex("search_all", {
+            searchField: "email",
+            filterFields: ["role"]
+        }),
 
     orders: defineTable({
         userId: v.id("users"),
@@ -64,7 +85,7 @@ export default defineSchema({
             color: v.string()
         })
         ),
-        totalPrice: v.number(),
+        totalAmount: v.number(),
         status: v.union(
             v.literal("pending"), 
             v.literal("paid"), 
@@ -86,10 +107,17 @@ export default defineSchema({
         type: v.union(
             v.literal("order_status"), 
             v.literal("promotion"), 
-            v.literal("alert")
+            v.literal("alert"),
+            v.literal("inventory")
         ),
-        createdAt: v.number()
+        createdAt: v.number(),
+        searchTexts: v.string(),
     })
         .index("by_user_id", ["userId"])
-        .index("by_type", ["type"])
+        .index("by_type_and_created", ["type", "createdAt"]) 
+        .index("by_created_at", ["createdAt"])
+        .searchIndex("search_all", {
+            searchField: "searchTexts",
+            filterFields: ["type"]
+        }),
 })
