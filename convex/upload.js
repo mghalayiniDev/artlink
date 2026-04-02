@@ -1,7 +1,7 @@
 "use node"
 
-import { ConvexError, v } from "convex/values"
-import { action, internalMutation, mutation } from "./_generated/server"
+import { v } from "convex/values"
+import { action } from "./_generated/server"
 import RateLimiter from "@convex-dev/rate-limiter"
 import { components, internal } from "./_generated/api"
 import { GoogleGenerativeAI } from "@google/generative-ai"
@@ -55,10 +55,12 @@ export const createCategory = action({
             if (!identity) return { success: false, error: "You must be logged in" }
 
             // 2. RATE LIMIT CHECK
-            try {
-                await rateLimiter.limit(ctx, "createCategory", { key: identity.subject })
-            } catch (e) {
-                return { success: false, error: "Too many requests. Please wait a moment." }
+            const status = await rateLimiter.limit(ctx, "createCategory", { 
+                key: identity.subject 
+            })
+
+            if (!status.ok) {
+                return { success: false, message: "Too many requests. Please wait a moment." }
             }
 
             // 3. ADMIN CHECK
@@ -69,6 +71,9 @@ export const createCategory = action({
             if (name.trim().length < 2) return { success: false, error: "Name is too short" }
             if (description.trim().length < 20) return { success: false, error: "Description needs more detail" }
             if (!base64Image.startsWith("data:image")) return { success: false, error: "Invalid image format" }
+            
+            // FIXED: Added size check to prevent massive payloads from crashing the server
+            if (base64Image.length > 7000000) return { success: false, error: "Image is too large (Max 5MB)" }
 
             let translations
             const apiKey = process.env.GEMENI_API_KEY
@@ -168,10 +173,12 @@ export const createProduct = action({
             if (!identity) return { success: false, error: "You must be logged in" }
 
             // 2. RATE LIMIT CHECK
-            try {
-                await rateLimiter.limit(ctx, "createProduct", { key: identity.subject })
-            } catch (e) {
-                return { success: false, error: "Too many requests. Please wait a moment" }
+            const status = await rateLimiter.limit(ctx, "createProduct", { 
+                key: identity.subject 
+            })
+
+            if (!status.ok) {
+                return { success: false, message: "Too many requests. Please wait a moment." }
             }
 
             // 3. ADMIN CHECK
@@ -183,6 +190,10 @@ export const createProduct = action({
             if (name.trim().length < 2) return { success: false, error: "Name is too short" }
             if (description.trim().length < 20) return { success: false, error: "Description needs more detail" }
             if (!base64Image.startsWith("data:image")) return { success: false, error: "Invalid image format" }
+            
+            // FIXED: Added size check to prevent massive payloads from crashing the server
+            if (base64Image.length > 7000000) return { success: false, error: "Image is too large (Max 5MB)" }
+
             if (price < 0) return { success: false, error: "Price cannot be negative" }
             if (discount < 0 || discount > 100) return { success: false, error: "Discount must be between 0 and 100" }
             if (stock < 0) return { success: false, error: "Stock cannot be negative" }
@@ -315,10 +326,12 @@ export const updateCategory = action({
             if (!identity) return { success: false, error: "You must be logged in" }
 
             // 2. RATE LIMIT CHECK
-            try {
-                await rateLimiter.limit(ctx, "updateCategory", { key: identity.subject })
-            } catch (e) {
-                return { success: false, error: "Too many requests. Please wait a moment." }
+            const status = await rateLimiter.limit(ctx, "updateCategory", { 
+                key: identity.subject 
+            })
+
+            if (!status.ok) {
+                return { success: false, message: "Too many requests. Please wait a moment." }
             }
 
             // 3. ADMIN CHECK
@@ -357,8 +370,9 @@ export const updateCategory = action({
                 try {
                     const aiResult = await model.generateContent(prompt)
                     translations = extractJSON(aiResult.response.text())
+                // FIXED: Changed aiError to error
                 } catch (error) {
-                    console.error("Translation logic failed:", aiError)
+                    console.error("Translation logic failed:", error)
                     return { success: false, error: "AI translation failed" }
                 }
             }
@@ -367,6 +381,10 @@ export const updateCategory = action({
             let imageUrl = undefined
 
             if (args.base64Image && args.base64Image.startsWith("data:image")) {
+                
+                // FIXED: Added size check here as well
+                if (args.base64Image.length > 7000000) return { success: false, error: "Image is too large (Max 5MB)" }
+
                 cloudinary.config({
                     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
                     api_key: process.env.CLOUDINARY_API_KEY,
@@ -381,7 +399,8 @@ export const updateCategory = action({
                         const folder = parts.pop()
                         await cloudinary.uploader.destroy(`${folder}/${fileName}`)
                     } catch (error) {
-                        console.warn("Old image delete failed (non-fatal):", e.message)
+                        // FIXED: Changed e.message to error.message
+                        console.warn("Old image delete failed (non-fatal):", error.message)
                     }
                 }
 
@@ -427,7 +446,7 @@ export const updateCategory = action({
             await ctx.runMutation(internal.admin.updateCategoryRecord, mutationArgs)
 
             return { success: true }
-        } catch (e) {
+        } catch (error) {
             console.error("Critical Action Error:", error.message)
             return { success: false, error: "An unexpected server error occurred" }
         }

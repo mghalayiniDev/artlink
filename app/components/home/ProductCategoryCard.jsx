@@ -28,7 +28,7 @@ export default function ProductCategoryCard({ category, products, idx, length })
                         {category.name[locale] || category.name["en"]}
                     </span>
                     <Link 
-                        href={`/products?category=${category._id}`} 
+                        href={`/shop?category=${category._id}`} 
                         className="text-[0.8rem] font-bold uppercase tracking-wide text-foreground 
                         hover:text-orange-500 transition-colors mt-4 md:mt-0 flex items-center gap-2.5"
                     >

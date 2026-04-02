@@ -8,21 +8,29 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { api } from "@/convex/_generated/api"
-import { useQuery } from "convex/react"
-import { Check, ChevronLeft, ChevronRight, Headset, Heart, Minus, Palette, Plus, Ruler, Share2, Shield, Truck } from "lucide-react"
+import { useMutation, useQuery } from "convex/react"
+import { Check, ChevronRight, Headset, Heart, Loader2, Minus, Palette, Plus, Ruler, Share2, Shield, Truck } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import { useState } from "react"
+import { toast } from "sonner"
 
 export default function ProductPage() {
     const params = useParams()
     const productId = params.id
-    const router = useRouter()
 
     const product = useQuery(api.products.getProductById, { id: productId })
     const productLoading = product === undefined
     const productError = product === null
+
+    const currentUser = useQuery(api.users.getCurrentUser)
+    const userLoading = currentUser === undefined
+    const userError = currentUser === null
+
+    const toggleWishlist = useMutation(api.products.addProductToWishList)
+    const addToCartMutation = useMutation(api.cart.addToCart)
+
 
     const t = useTranslations("product")
     const locale = useLocale()
@@ -43,6 +51,108 @@ export default function ProductPage() {
     const [customDepth, setCustomDepth] = useState('')
     const [selectedColor, setSelectedColor] = useState('')
     const [quantity, setQuantity] = useState(1)
+    const [isAddingToCart, setIsAddingToCart] = useState(false)
+
+    const currentH = customHeight ? Number(customHeight) : null
+    const currentW = customWidth ? Number(customWidth) : null
+    const currentD = customDepth ? Number(customDepth) : null
+
+    const existingCartItem = (currentUser && selectedColor && currentH && currentW && currentD)
+        ? currentUser.cart?.find(item =>
+            item.productId.toString() === productId &&
+            item.color.code === selectedColor &&
+            item.dimensions.h === currentH &&
+            item.dimensions.w === currentW &&
+            item.dimensions.d === currentD
+        )
+        : null
+
+    const maxAvailable = product && existingCartItem 
+        ? product.stock - existingCartItem.quantity 
+        : product?.stock || 0
+
+    const isAlreadyInCart = !!existingCartItem
+
+    const handleLikeClick = async () => {
+        try {
+            const result = await toggleWishlist({ productId })
+            
+            if (!result.success) {
+                toast.error(result.message || t("errorLikeProduct"))
+                return
+            }
+        } catch (error) {
+            toast.error(t("errorLikeProduct"))
+        }
+    }
+
+    const handleAddToCart = async () => {
+        if (!currentUser) {
+            return toast.error(t("loginRequired") || "Please log in to add items to your cart.")
+        }
+
+        if (product.stock < 1) {
+            return toast.error(t("outOfStock") || "This product is currently out of stock.")
+        }
+
+        if (quantity > product.stock) {
+            return toast.error(
+                t("insufficientStock", { stock: product.stock }) || 
+                `Only ${product.stock} items available in stock.`
+            )
+        }
+
+        if (!selectedColor) {
+            return toast.error(t("colorRequired") || "Please select a color.")
+        }
+
+        if (!customHeight || !customWidth || !customDepth) {
+            return toast.error(t("dimensionsRequired") || "Please enter all dimensions.")
+        }
+
+        const h = Number(customHeight)
+        const w = Number(customWidth)
+        const d = Number(customDepth)
+
+        if (isNaN(h) || h <= 0 || isNaN(w) || w <= 0 || isNaN(d) || d <= 0) {
+            return toast.error(t("invalidDimensions") || "Dimensions must be valid numbers greater than zero.")
+        }
+
+        const fullColorObject = product.colors.find(c => c.code === selectedColor)
+
+        if (!fullColorObject) {
+            return toast.error("Invalid color selection.")
+        }
+
+        setIsAddingToCart(true)
+
+        try {
+            const result = await addToCartMutation({
+                productId,
+                quantity,
+                dimensions: { h, w, d },
+                color: {
+                    code: fullColorObject.code,
+                    name: { en: fullColorObject.name.en, ar: fullColorObject.name.ar }
+                }
+            })
+
+            if (result.success) {
+                if (isAlreadyInCart) {
+                    toast.success(t("cartUpdated") || "Cart quantity updated successfully!")
+                } else {
+                    toast.success(t("addedToCartSuccess") || "Added to cart successfully!")
+                }
+                setQuantity(1)
+            } else {
+                toast.error(result.message || "Failed to add to cart.")
+            }
+        } catch (error) {
+            toast.error("An unexpected error occurred.")
+        } finally {
+            setIsAddingToCart(false)
+        }
+    }
 
     const handleMouseMove = (e) => {
         const { left, top, width, height } = e.currentTarget.getBoundingClientRect()
@@ -77,7 +187,7 @@ export default function ProductPage() {
             }
         } else {
             navigator.clipboard.writeText(currentUrl)
-            alert(`✅ ${shareSuccess}`)
+            alert(`✅ ${t("shareSuccess")}`)
         }
     }
 
@@ -288,7 +398,7 @@ export default function ProductPage() {
                                                     {product?.colors?.map((color, idx) => (
                                                         <SelectItem 
                                                             key={idx} 
-                                                            value={color} 
+                                                            value={color.code} 
                                                             className="cursor-pointer flex items-center text-[0.825rem] font-medium"
                                                         >
                                                             <div className="w-3 h-3 mr-1" style={{ backgroundColor: color.code }} />
@@ -315,8 +425,8 @@ export default function ProductPage() {
                                                 </button>
                                                 <span className="w-12 text-center font-mono text-sm">{quantity}</span>
                                                 <button
-                                                    onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                                                    disabled={quantity >= product.stock} 
+                                                    onClick={() => setQuantity(Math.min(maxAvailable, quantity + 1))}
+                                                    disabled={quantity >= maxAvailable}
                                                     className="p-3 h-full hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center justify-center"
                                                 >
                                                     <Plus className="w-4 h-4" />
@@ -324,18 +434,39 @@ export default function ProductPage() {
                                             </div>
 
                                             <Button 
-                                                className="flex-1 rounded-none bg-foreground text-background hover:bg-foreground/90 
-                                                uppercase tracking-wide font-bold h-11! w-full text-[0.825rem] cursor-pointer border border-black"
+                                                onClick={handleAddToCart}
+                                                disabled={isAddingToCart || maxAvailable === 0} 
+                                                className="flex-1 rounded-none bg-foreground text-background hover:bg-foreground/90 uppercase tracking-wide font-bold h-11! w-full text-[0.825rem] cursor-pointer border border-black disabled:opacity-50"
                                             >
-                                                {t('addToCart')}
+                                                {isAddingToCart ? (
+                                                    <span className="flex items-center gap-2">
+                                                        <Loader2 className="w-4 h-4 animate-spin" /> {t('adding') || 'Adding...'}
+                                                    </span>
+                                                ) : maxAvailable === 0 ? (
+                                                    t('outOfStock') || 'Limit Reached'
+                                                ) : isAlreadyInCart ? (
+                                                    t('updateCart') || `Update Cart (Currently: ${existingCartItem.quantity})`
+                                                ) : (
+                                                    t('addToCart')
+                                                )}
                                             </Button>
-                                            <Button 
-                                                className="group rounded-none bg-neutral-100 text-background hover:bg-neutral-200 h-11! cursor-pointer border"
-                                            >
-                                                <Heart width={22} height={22} className="text-black" />
-                                            </Button>
+                                            {userLoading ? (
+                                                <div 
+                                                    className="aspect-square h-11 bg-neutral-100"
+                                                />
+                                            ) : (
+                                                (!userError && currentUser) && (
+                                                    <Button 
+                                                        className={`w-11 h-11 flex items-center justify-center border rounded-lg transition-all duration-300 cursor-pointer hover:bg-neutral-200 bg-white ${
+                                                            currentUser?.likedProducts.includes(productId) ? "border-destructive bg-destructive/5 text-destructive" : "border-border text-muted-foreground"
+                                                        }`}
+                                                        onClick={handleLikeClick}
+                                                    >
+                                                        <Heart width={22} height={22} className={currentUser?.likedProducts.includes(productId) ? "text-destructive fill-destructive" : "text-black"} />
+                                                    </Button>
+                                                )
+                                            )}
                                         </div>
-                                        
                                     </div>
 
                                     {/* Tabs: Details & Features */}

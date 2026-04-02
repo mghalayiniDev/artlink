@@ -375,7 +375,19 @@
         "shop": "Shop",
         "shareTitle": "Check out this product from ArtLink",
         "shareSuccess": "Link copied to clipboard",
-        "supportMsg": "Hello, I need some help with the product: {productName}"
+        "supportMsg": "Hello, I need some help with the product: {productName}",
+        "errorLikeProduct": "Could not like product",
+        "loginRequired": "Please log in to add items to your cart.",
+        "outOfStock": "This product is currently out of stock.",
+        "insufficientStock": "Only {stock} items available in stock.",
+        "colorRequired": "Please select a color.",
+        "dimensionsRequired": "Please enter all dimensions.",
+        "invalidDimensions": "Dimensions must be valid numbers greater than zero.",
+        "addedToCartSuccess": "Added to cart successfully!",
+        "adding": "Adding...",
+        "updateCart": "Update Cart",
+        "cartUpdated": "Cart quantity updated successfully!",
+        "limitReached": "Limit Reached"
     },
     "privacy": {
         "home": "Home",
@@ -388,5 +400,28 @@
         "terms": "Terms of service",
         "lastUpdate": "Last updated: March 27, 2026",
         "contact": "For terms inquiries, email us at"
+    },
+    "404": {
+        "header": "Page Not Found",
+        "description": "The page you're looking for doesn't exist or has been moved. Let us help you find what you need",
+        "back": "Back to home",
+        "goBack": "Go back",
+        "subheader": "Popular Destinations",
+        "home": "Home",
+        "shop": "Shop",
+        "about": "About"
+    },
+    "wishlist": {
+        "home": "Home",
+        "wishlist": "Wishlist",
+        "header": "Your Wishlist",
+        "item": "item",
+        "items": "items",
+        "saved": "saved",
+        "clear": "Clear all",
+        "titleError": "Your wishlist is empty",
+        "descError": "Browse our collection and tap the heart icon to save your favorite doors",
+        "btnError": "Explore Collection",
+        "youMightLikeHeader": "You Might Also Like"
     }
 }

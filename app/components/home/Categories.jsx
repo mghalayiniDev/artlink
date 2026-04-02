@@ -49,7 +49,7 @@ export default function Categories({ categories, categoriesLoading, categoriesEr
                                 {/* Navigation Arrows */}
                                 <Link
                                     href="/shop"
-                                    className="font-medium text-[0.825rem] flex items-center gap-2.5 mt-auto hover:underline w-fit"
+                                    className="font-semibold text-[0.825rem] flex items-center gap-2.5 mt-auto hover:underline w-fit"
                                 >
                                     {t("viewAllCategories")}
                                     <ArrowRight width={12} height={12} />

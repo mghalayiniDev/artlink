@@ -1,6 +1,17 @@
 import { v } from "convex/values"
-import { query } from "./_generated/server"
+import { mutation, query } from "./_generated/server"
 import { PRODUCT_FILTERS } from "@/constants"
+import RateLimiter from "@convex-dev/rate-limiter"
+import { components } from "./_generated/api"
+
+const rateLimiter = new RateLimiter(components.rateLimiter, {
+    wishlist: {
+        kind: "token bucket",
+        rate: 10,       
+        period: 60000,  
+        capacity: 20    
+    }
+})
 
 export const getProductById = query({
     args: { id: v.string() }, 
@@ -130,7 +141,6 @@ export const getFilteredProducts = query({
 
         let productQuery = ctx.db.query("products")
 
-        // 1. Database level: Filter by category and status
         if (validCategoryId) {
             productQuery = productQuery.withIndex("by_category_status", (q) =>
                 q.eq("categoryId", validCategoryId).eq("status", "active")
@@ -141,7 +151,6 @@ export const getFilteredProducts = query({
 
         const allActiveProducts = await productQuery.order("desc").collect()
 
-        // 2. JavaScript level: Flexible substring filtering for both material and color
         const filtered = allActiveProducts.filter((product) => {
             const matchesMaterial = !searchMaterial || 
                 (product.details?.material?.en || "").toLowerCase().includes(searchMaterial)
@@ -154,7 +163,6 @@ export const getFilteredProducts = query({
             return matchesMaterial && matchesColor
         })
 
-        // 3. Pagination math
         const totalCount = filtered.length
         const skip = (sPage - 1) * sPageSize
 
@@ -163,6 +171,129 @@ export const getFilteredProducts = query({
             totalCount,
             totalPages: Math.ceil(totalCount / sPageSize),
             currentPage: sPage
+        }
+    }
+})
+
+export const getWishlistAndRecommendations = query({
+    args: {},
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity() 
+        if (!identity) return null
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_user_id", (q) =>
+                q.eq("userId", identity.subject)
+            )
+            .unique()
+
+        if (!user) return null
+
+        const sourceIds = user.likedProducts || []
+
+        if (sourceIds.length === 0) {
+            return null
+        }
+
+        const wishlistRaw = await Promise.all(
+            sourceIds.map((id) => ctx.db.get(id))
+        )
+        const wishlist = wishlistRaw.filter((p) => p !== null && p.status === "active")
+
+        const favoriteCategoryIds = [...new Set(wishlist.map((p) => p.categoryId))]
+
+        let recommendations = []
+        for (const catId of favoriteCategoryIds) {
+            const productsInCat = await ctx.db
+                .query("products")
+                .withIndex("by_category_status", (q) =>
+                    q.eq("categoryId", catId).eq("status", "active")
+                )
+                .take(10); 
+
+            recommendations.push(...productsInCat)
+        }
+
+        recommendations = recommendations.filter(
+            (prod, index, self) =>
+                !sourceIds.includes(prod._id) && 
+                index === self.findIndex((p) => p._id === prod._id) 
+        )
+
+        if (recommendations.length < 4) {
+            const currentRecIds = recommendations.map(p => p._id)
+            const idsToExclude = [...sourceIds, ...currentRecIds] 
+            const neededAmount = 4 - recommendations.length
+            
+            const fillersRaw = await ctx.db
+                .query("products")
+                .withIndex("by_status", (q) => q.eq("status", "active"))
+                .take(20);
+            
+            const fillers = fillersRaw
+                .filter(p => !idsToExclude.includes(p._id))
+                .slice(0, neededAmount)
+            
+            recommendations.push(...fillers)
+        }
+
+        return {
+            wishlist: wishlist,
+            recommendations: recommendations.slice(0, 4)
+        }
+    }
+})
+
+export const addProductToWishList = mutation({
+    args: { productId: v.string() }, 
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity() 
+        if (!identity) {
+            return { success: false, message: "Please log in to add items to your wishlist." }
+        }
+
+        const status = await rateLimiter.limit(ctx, "wishlist", { 
+            key: identity.subject 
+        })
+
+        if (!status.ok) {
+            return { success: false, message: "Too many requests. Please wait a moment." }
+        }
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_user_id", (q) =>
+                q.eq("userId", identity.subject)
+            )
+            .unique()
+
+        if (!user) {
+            return { success: false, message: "User profile not found in database." }
+        }
+
+        const validId = ctx.db.normalizeId("products", args.productId)
+        if (!validId) return { success: false, message: "Invalid product." }
+        const product = await ctx.db.get(validId)
+        if (!product) {
+            return { success: false, message: "Product not found." }
+        }
+
+        const currentWishlist = user.likedProducts || []
+        const isAlreadyLiked = currentWishlist.includes(args.productId)
+
+        if (isAlreadyLiked) {
+            const updatedWishlist = currentWishlist.filter(
+                (id) => id !== args.productId
+            )
+            
+            await ctx.db.patch(user._id, { likedProducts: updatedWishlist })
+            return { success: true, action: "removed", message: "Removed from wishlist." }
+        } else {
+            await ctx.db.patch(user._id, {
+                likedProducts: [...currentWishlist, args.productId],
+            })
+            return { success: true, action: "added", message: "Added to wishlist!" }
         }
     }
 })

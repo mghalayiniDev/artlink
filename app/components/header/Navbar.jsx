@@ -6,7 +6,7 @@ import Logo from "../Logo"
 import Searchbar from "./Searchbar"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
-import { ChevronDown, Loader, Menu, X } from "lucide-react"
+import { ChevronDown, Heart, Loader, Menu, ShoppingBag, X } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useIsMidScreen } from "@/hooks/useIsMidScreen"
 import { Authenticated, AuthLoading, Unauthenticated, useQuery } from "convex/react"
@@ -23,6 +23,11 @@ export default function Navbar() {
     const categoriesRef = useRef(null)
     const locale = useLocale()
     const { user } = useUser()
+
+    const currentUser = useQuery(api.users.getCurrentUser)
+    const userLoading = currentUser === undefined
+    const userError = currentUser === null
+
     const isAdmin = user?.publicMetadata?.role === "admin"
 
     const categories = useQuery(api.categories.getAllCategories)
@@ -125,6 +130,7 @@ export default function Navbar() {
                                     <>
                                         <div className="absolute top-full right-0 z-0 w-full h-9" />
                                         <motion.div
+                                            key="categories-dropdown"
                                             initial={{ opacity: 0, y: 4 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, y: 4 }}
@@ -149,7 +155,7 @@ export default function Navbar() {
                     )}
 
                     {/* Actions */}
-                    <div className="flex items-center gap-6 md:gap-8">
+                    <div className="flex items-center gap-2">
                         <Unauthenticated>
                             <Link
                                 href="/sign-in"
@@ -161,6 +167,27 @@ export default function Navbar() {
                         </Unauthenticated>
                         <Authenticated>
                             <UserButton />
+                            {(!userLoading && !userError && currentUser) && (
+                                <div className="flex items-center">
+                                    <Link 
+                                        href="/wishlist" 
+                                        className="flex w-10 h-10 items-center justify-center rounded-lg text-muted-foreground 
+                                        hover:text-foreground hover:bg-secondary transition-colors relative"
+                                    >
+                                        <Heart size={18} />
+                                        <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 rounded-full bg-destructive 
+                                        text-neutral-100 text-[8px] flex items-center justify-center font-bold">{currentUser?.likedProducts?.length}</span>
+                                    </Link>
+                                    <Link 
+                                        href="/cart" 
+                                        className="w-10 h-10 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors relative"
+                                    >
+                                        <ShoppingBag size={18} />
+                                        <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 rounded-full bg-orange-500 
+                                        text-accent-foreground text-[8px] flex items-center justify-center font-bold">{currentUser?.cart?.length}</span>
+                                    </Link>
+                                </div>
+                            )}
                         </Authenticated>
                         <AuthLoading>
                             <Loader

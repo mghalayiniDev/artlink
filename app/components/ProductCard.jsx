@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Eye } from "lucide-react" // Note: Heart import removed
+import { Eye } from "lucide-react" 
 import { useLocale, useTranslations } from "next-intl"
 import { useState } from "react"
 import Link from "next/link" 

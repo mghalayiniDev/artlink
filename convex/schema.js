@@ -61,7 +61,19 @@ export default defineSchema({
         cart: v.array(
             v.object({
                 productId: v.id("products"),
-                quantity: v.number()
+                quantity: v.number(),
+                color: v.object({
+                    code: v.string(),
+                    name: v.object({ 
+                        en: v.string(), 
+                        ar: v.string() 
+                    })
+                }),
+                dimensions: v.object({ 
+                    h: v.number(), 
+                    w: v.number(), 
+                    d: v.number() 
+                })
             })
         )
     })
@@ -76,14 +88,13 @@ export default defineSchema({
     orders: defineTable({
         userId: v.id("users"),
         products: v.array(
-        v.object({
-            productId: v.id("products"),
-            nameAtPurchase: v.string(),
-            priceAtPurchase: v.number(),
-            quantity: v.number(),
-            dimensions: v.object({ h: v.number(), w: v.number(), d: v.number() }),
-            color: v.string()
-        })
+            v.object({
+                productId: v.id("products"),
+                nameAtPurchase: v.string(),
+                priceAtPurchase: v.number(),
+                quantity: v.number(),
+                dimensions: v.object({ h: v.number(), w: v.number(), d: v.number() })
+            })
         ),
         totalAmount: v.number(),
         status: v.union(

@@ -1,5 +1,5 @@
 import { v } from "convex/values"
-import { internalMutation, internalQuery } from "./_generated/server"
+import { internalMutation, internalQuery, query } from "./_generated/server"
 import { internal } from "./_generated/api"
 
 export const upsertFromClerk = internalMutation({
@@ -101,4 +101,23 @@ export const isAdmin = internalQuery({
         
         return user?.role === "admin"
     }
+})
+
+export const getCurrentUser = query({
+    args: {},
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity()
+        if (!identity) {
+            return null
+        }
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_user_id", (q) =>
+                q.eq("userId", identity.subject)
+            )
+            .unique()
+
+        return user
+    },
 })

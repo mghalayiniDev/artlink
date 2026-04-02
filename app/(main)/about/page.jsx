@@ -240,7 +240,7 @@ export default function AboutUs() {
                                 {[
                                     { icon: MapPin, label: t("address"), value: "309 S115 - Industrial Area 5 - Industrial Area - Sharjah" },
                                     { icon: Phone, label: t("phone"), value: "+971 055 466 7720" },
-                                    { icon: Mail, label: t("email"), value: "info@artlink.ae" },
+                                    { icon: Mail, label: t("email"), value: "art.link.for.doors@gmail.com" },
                                     { icon: Clock, label: t("hours"), value: `${t("open_hrs")}\n${t("closed_hrs")}` },
                                 ].map((item, i) => (
                                 <motion.div
@@ -278,14 +278,6 @@ export default function AboutUs() {
                         </div>
                     </div>
                 </ContentWrapper>
-            </section>
-
-            {/* ═══ LOCATION & MAP ═══ */}
-            <section className="py-0">
-                <div className="grid lg:grid-cols-2">
-                    {/* Info */}
-                    
-                </div>
             </section>
 
             {/* ═══ CTA ═══ */}
