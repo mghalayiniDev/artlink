@@ -1,5 +1,5 @@
 import { v } from "convex/values"
-import { mutation } from "./_generated/server"
+import { mutation, query } from "./_generated/server"
 import RateLimiter from "@convex-dev/rate-limiter"
 import { components } from "./_generated/api"
 
@@ -9,7 +9,60 @@ const rateLimiter = new RateLimiter(components.rateLimiter, {
         rate: 10,
         period: 60000,
         capacity: 20
+    },
+    updateCartQuantity: {
+        kind: "token bucket",
+        rate: 10,
+        period: 60000,
+        capacity: 20
+    },
+    removeFromCart: {
+        kind: "token bucket",
+        rate: 10,
+        period: 60000,
+        capacity: 20
     }
+})
+
+export const getCartItems = query({
+    args: {},
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity()
+        if (!identity) return null
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_user_id", (q) => q.eq("userId", identity.subject))
+            .unique()
+
+        if (!user || !user.cart || user.cart.length === 0) return []
+
+        const productIds = user.cart.map((item) => item.productId)
+        const productsRaw = await Promise.all(
+            productIds.map((id) => ctx.db.get(id))
+        )
+
+        const productMap = new Map()
+        productsRaw.forEach((p) => {
+            if (p && p.status === "active") productMap.set(p._id, p)
+        })
+
+        return user.cart.map((item) => {
+            const product = productMap.get(item.productId)
+            if (!product) return null
+
+            return {
+                ...item,
+                product: {
+                    name: product.name,
+                    thumbnail: product.thumbnail,
+                    price: product.price,
+                    discount: product.discount || 0,
+                    stock: product.stock,
+                },
+            };
+        }).filter((item) => item !== null)
+    },
 })
 
 export const addToCart = mutation({
@@ -60,6 +113,17 @@ export const addToCart = mutation({
 
         const existingCart = user.cart ?? []
 
+        const currentTotalOfAllVariants = existingCart
+            .filter(item => item.productId === validId)
+            .reduce((sum, item) => sum + item.quantity, 0)
+
+        if (currentTotalOfAllVariants + args.quantity > product.stock) {
+            return { 
+                success: false, 
+                message: `Cannot add ${args.quantity}. You already have ${currentTotalOfAllVariants} in your cart, and only ${product.stock} are available.` 
+            }
+        }
+
         const existingIdx = existingCart.findIndex((item) =>
             item.productId === validId && 
             item.color.code === args.color.code &&
@@ -75,10 +139,6 @@ export const addToCart = mutation({
         const currentQty = existingIdx !== -1 ? existingCart[existingIdx].quantity : 0
         const proposedQty = currentQty + args.quantity
 
-        if (proposedQty > product.stock) {
-            return { success: false, message: `Only ${product.stock} items available in stock.` }
-        }
-
         const updatedCart = existingIdx !== -1
             ? existingCart.map((item, idx) =>
                 idx === existingIdx ? { ...item, quantity: proposedQty } : item
@@ -92,5 +152,107 @@ export const addToCart = mutation({
 
         await ctx.db.patch(user._id, { cart: updatedCart })
         return { success: true }
+    }
+})
+
+export const updateCartQuantity = mutation({
+    args: {
+        productId: v.string(),
+        dimensions: v.object({ h: v.number(), w: v.number(), d: v.number() }),
+        colorCode: v.string(),
+        newQuantity: v.number(),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity()
+        if (!identity) return { success: false, message: "Unauthorized" }
+
+        const status = await rateLimiter.limit(ctx, "updateCartQuantity", { key: identity.subject })
+        if (!status.ok) return { success: false, message: "Too many requests. Please wait a moment." }
+
+        const validId = ctx.db.normalizeId("products", args.productId)
+        if (!validId) return { success: false, message: "Invalid product ID." }
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_user_id", (q) => q.eq("userId", identity.subject))
+            .unique()
+
+        if (!user) return { success: false, message: "User not found." }
+
+        const existingCart = user.cart ?? []
+
+        const itemIdx = existingCart.findIndex((item) => 
+            item.productId === validId && 
+            item.color.code === args.colorCode &&
+            item.dimensions.h === args.dimensions.h &&
+            item.dimensions.w === args.dimensions.w &&
+            item.dimensions.d === args.dimensions.d
+        )
+
+        if (itemIdx === -1) return { success: false, message: "Item not found in cart." }
+
+        if (args.newQuantity < 1) {
+            const updatedCart = existingCart.filter((_, idx) => idx !== itemIdx)
+            await ctx.db.patch(user._id, { cart: updatedCart });
+            return { success: true, message: "Item removed from cart." }
+        }
+
+        const product = await ctx.db.get(validId)  
+        if (!product || product.status !== "active") {
+            return { success: false, message: "Product is no longer available." }
+        }
+
+        const otherVariantsTotal = existingCart
+            .filter((item, idx) => item.productId === validId && idx !== itemIdx)
+            .reduce((sum, item) => sum + item.quantity, 0)
+
+        if (otherVariantsTotal + args.newQuantity > product.stock) {
+            return { 
+                success: false, 
+                message: `Total stock exceeded` 
+            }
+        }
+
+        const updatedCart = [...existingCart]
+        updatedCart[itemIdx] = { ...updatedCart[itemIdx], quantity: args.newQuantity }
+
+        await ctx.db.patch(user._id, { cart: updatedCart })
+        return { success: true }
+    }
+})
+
+export const removeFromCart = mutation({
+    args: {
+        productId: v.string(),
+        dimensions: v.object({ h: v.number(), w: v.number(), d: v.number() }),
+        colorCode: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity()
+        if (!identity) return { success: false, message: "Unauthorized" }
+
+        const status = await rateLimiter.limit(ctx, "removeFromCart", { key: identity.subject })
+        if (!status.ok) return { success: false, message: "Too many requests. Please wait a moment." }
+
+        const validId = ctx.db.normalizeId("products", args.productId)
+        if (!validId) return { success: false, message: "Invalid product ID." }
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_user_id", (q) => q.eq("userId", identity.subject))
+            .unique()
+
+        if (!user) return { success: false, message: "User not found." }
+
+        const updatedCart = (user.cart ?? []).filter((item) => 
+            !(item.productId === validId && 
+              item.color.code === args.colorCode &&
+              item.dimensions.h === args.dimensions.h && 
+              item.dimensions.w === args.dimensions.w && 
+              item.dimensions.d === args.dimensions.d)
+        )
+
+        await ctx.db.patch(user._id, { cart: updatedCart })
+        return { success: true, message: "Item removed" }
     }
 })

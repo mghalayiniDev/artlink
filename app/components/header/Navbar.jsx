@@ -155,7 +155,7 @@ export default function Navbar() {
                     )}
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center">
                         <Unauthenticated>
                             <Link
                                 href="/sign-in"
@@ -198,7 +198,7 @@ export default function Navbar() {
                         </AuthLoading>
                         {/* Mobile Menu Toggle */}
                         <button
-                            className="lg:hidden cursor-pointer"
+                            className="lg:hidden cursor-pointer ml-1"
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                         >
                             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

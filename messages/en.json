@@ -423,5 +423,35 @@
         "descError": "Browse our collection and tap the heart icon to save your favorite doors",
         "btnError": "Explore Collection",
         "youMightLikeHeader": "You Might Also Like"
+    },
+    "cart": {
+        "home": "Home",
+        "cart": "Cart",
+        "header": "Shopping Cart",
+        "items": "items",
+        "item": "item",
+        "saved": "in cart",
+        "titleError": "Your cart is empty",
+        "descError": "Browse our collection and add items to your cart",
+        "btnError": "Explore Collection",
+        "product": "Product",
+        "price": "Price",
+        "quantity": "Quantity",
+        "total": "Total",
+        "currency": "AED",
+        "updateError": "Failed to update cart. Please try again",
+        "removeError": "Failed to remove item. Please try again",
+        "orderSummary": "Order Summary",
+        "subtotal": "Subtotal",
+        "shipping": "Shipping",
+        "free": "Free",
+        "continueShopping": "Continue Shopping",
+        "promoPlaceholder": "Enter promo code",
+        "apply": "Apply",
+        "checkoutBtn": "Proceed to Checkout",
+        "freeShipping": "Free Shipping",
+        "securePay": "Secure Pay",
+        "easyReturns": "Easy Returns"
+
     }
 }

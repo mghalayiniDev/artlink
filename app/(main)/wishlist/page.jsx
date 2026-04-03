@@ -16,8 +16,6 @@ export default function WishList() {
     const wishlistLoading = wishlistedProducts === undefined
     const wishlistError = wishlistedProducts === null
 
-    console.log(wishlistedProducts)
-
     return (
         <section className="min-h-[60vh] pt-14 pb-24">
             <ContentWrapper>
@@ -77,7 +75,7 @@ export default function WishList() {
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="flex flex-col items-center justify-center py-18 px-4 md:border-2 rounded-md md:border-dashed"
+                            className="flex flex-col items-center justify-center py-18 px-4 md:border rounded-lg shadow-sm"
                         >
                             <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-6">
                                 <Heart size={32} className="text-muted-foreground" />
@@ -87,7 +85,7 @@ export default function WishList() {
                                 {t("descError")}
                             </p>
                             <Link
-                                href="/"
+                                href="/shop"
                                 className="inline-flex items-center gap-2 px-8 py-3 bg-orange-500 text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity"
                             >
                                 <ArrowLeft size={15} />
