@@ -300,7 +300,10 @@ export default function Cart() {
                                                 className="w-full bg-neutral-200/60 rounded-lg text-sm py-2.5 pl-9 pr-4 outline-none text-foreground placeholder:text-muted-foreground border border-transparent focus:border-orange-500/30 transition-colors"
                                             />
                                         </div>
-                                        <button className="px-4 py-2.5 border border-border text-xs font-semibold text-foreground rounded-lg hover:bg-secondary transition-colors cursor-pointer">
+                                        <button 
+                                            className="px-4 py-2.5 border border-border text-xs font-semibold text-foreground rounded-lg hover:bg-secondary transition-colors cursor-pointer"
+                                            onClick={() => { toast.error(t("invalidPromoCode")) }}    
+                                        >
                                             {t("apply")}
                                         </button>
                                     </div>

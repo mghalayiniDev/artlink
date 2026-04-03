@@ -450,8 +450,7 @@
         "apply": "Apply",
         "checkoutBtn": "Proceed to Checkout",
         "freeShipping": "Free Shipping",
-        "securePay": "Secure Pay",
-        "easyReturns": "Easy Returns"
-
+        "easyReturns": "Easy Returns",
+        "invalidPromoCode": "Invalid promo code"
     }
 }
