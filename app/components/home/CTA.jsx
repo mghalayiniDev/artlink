@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
 import ContentWrapper from "../ContentWrapper"
+import Link from "next/link"
 
 export default function CTA() {
     const t = useTranslations("cta")
@@ -20,13 +21,13 @@ export default function CTA() {
                     transition={{ duration: 0.6 }}
                     className="relative z-10 text-center"
                 >
-                    <span className="font-extrabold uppercase text-4xl md:text-6xl lg:text-7xl text-background mb-10 block">
+                    <span className="font-extrabold uppercase text-4xl md:text-6xl lg:text-7xl text-background mb-12 block">
                         {t('title')}<br />{t('title2')}
                     </span>
-                    <button className="px-10 md:px-12 py-3.75 md:py-4.5 bg-linear-to-r from-orange-500 to-orange-700 text-background 
+                    <Link href="/shop" className="px-10 md:px-12 py-3.75 md:py-4.5 bg-linear-to-r from-orange-500 to-orange-700 text-background 
                     font-bold uppercase tracking-wider hover:opacity-90 transition-opacity cursor-pointer text-sm md:text-[1rem]">
                         {t('shopButton')}
-                    </button>
+                    </Link>
                 </motion.div>
             </ContentWrapper>
         </section>
