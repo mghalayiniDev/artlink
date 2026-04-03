@@ -11,12 +11,6 @@ export default function ProductCard({ product, idx }) {
     const locale = useLocale()
     const t = useTranslations("productcategory")
 
-    const handleButtonClick = (e, action) => {
-        e.preventDefault() 
-        e.stopPropagation() 
-        console.log(action)
-    }
-
     return (
         <Link href={`/product/${product._id}`} passHref>
             <motion.div
@@ -38,7 +32,6 @@ export default function ProductCard({ product, idx }) {
                     
                     <motion.button
                         type="button"
-                        onClick={(e) => handleButtonClick(e, "QuickView")}
                         initial={{ y: '100%' }}
                         animate={{ y: hovered ? '0%' : '100%' }}
                         transition={{ duration: 0.3 }}
