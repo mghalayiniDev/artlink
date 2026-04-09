@@ -51,12 +51,16 @@ export default function PrivacyPolicy() {
                             </motion.div>
                         ))}
                     </div>
-
-                    <div className="mt-12 pt-10 border-t border-border">
-                        <p className="text-xs font-medium">
-                            {t("contact")}{" "}
-                            <a href="mailto:art.link.for.doors@gmail.com" className="text-orange-500 hover:underline">art.link.for.doors@gmail.com</a>
-                        </p>
+                    <hr className="my-12" />
+                    <div className="mt-12 p-6 border flex flex-col gap-6 md:flex-row md:justify-between items-start">
+                        <div className="flex flex-col">
+                            <span className="text-sm block font-bold text-foreground mb-1.5">{t("haveQuestions")}</span>
+                            <p className="text-sm text-gray-600 max-w-md">{t("haveQuestionsDesc")}</p>
+                        </div>
+                        <a href="mailto:art.link.for.doors@gmail.com" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-orange-500 text-xs 
+                        font-medium uppercase tracking-widest hover:bg-orange-400 transition-colors shrink-0 cursor-pointer">
+                            {t("contact")}
+                        </a>
                     </div>
                 </motion.div>
             </ContentWrapper>

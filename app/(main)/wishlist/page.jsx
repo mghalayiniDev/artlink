@@ -73,24 +73,37 @@ export default function WishList() {
                 ) : (
                     (wishlistError || !wishlistedProducts || wishlistedProducts?.wishlist.length === 0) ? (
                         <motion.div
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="flex flex-col items-center justify-center py-18 px-4 md:border rounded-lg shadow-sm"
+                            transition={{ duration: 0.5 }}
+                            className="flex flex-col items-center justify-center py-6"
                         >
-                            <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-6">
-                                <Heart size={32} className="text-muted-foreground" />
+                            <div className="relative mb-8">
+                                <div className="w-28 h-28 rounded-2xl bg-secondary/50 border border-border flex items-center justify-center">
+                                    <Heart size={40} className="text-muted-foreground/40" />
+                                </div>
+                                <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center">
+                                    <span className="text-accent-foreground text-xs font-bold">0</span>
+                                </div>
                             </div>
-                            <span className="text-[1.75rem] block font-extrabold text-foreground mb-2">{t("titleError")}</span>
-                            <p className="text-[0.9rem] text-muted-foreground mb-6 text-center max-w-sm">
+                            <span className="text-2xl block font-bold text-foreground mb-2">{t("titleError")}</span>
+                            <p className="text-sm text-muted-foreground mb-8 text-center max-w-md leading-relaxed">
                                 {t("descError")}
                             </p>
+                            <div className="flex items-center gap-3">
                             <Link
-                                href="/shop"
-                                className="inline-flex items-center gap-2 px-8 py-3 bg-orange-500 text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity"
+                                href="/"
+                                className="inline-flex items-center gap-2 px-7 py-3 bg-orange-500 text-accent-foreground text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity"
                             >
-                                <ArrowLeft size={15} />
                                 {t("btnError")}
                             </Link>
+                            <Link
+                                href="/cart"
+                                className="inline-flex items-center gap-2 px-7 py-3 border border-border text-foreground text-sm font-medium rounded-lg hover:bg-secondary transition-colors"
+                            >
+                                {t("btnError2")}
+                            </Link>
+                            </div>
                         </motion.div>
                     ) : (
                         <>

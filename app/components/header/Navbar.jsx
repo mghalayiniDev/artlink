@@ -101,6 +101,9 @@ export default function Navbar() {
                             </Link>
                         ))}
                     </div>
+                    {categoriesLoading && (
+                        <div className="w-20 h-6.5" />
+                    )}
                     {/* Categories Dropdown */}
                     {(!categoriesLoading && !categoriesError && (categories && categories.length > 0)) && (
                         <div
@@ -166,12 +169,20 @@ export default function Navbar() {
                             </Link>
                         </Unauthenticated>
                         <Authenticated>
-                            <UserButton />
+                            <UserButton>
+                                <UserButton.MenuItems>
+                                    <UserButton.Link
+                                        label={t("myOrders")}
+                                        labelIcon={<ShoppingBag size={15} />}
+                                        href="/orders"
+                                    />
+                                </UserButton.MenuItems>
+                            </UserButton>
                             {(!userLoading && !userError && currentUser) && (
                                 <div className="flex items-center">
                                     <Link 
                                         href="/wishlist" 
-                                        className="flex w-10 h-10 items-center justify-center rounded-lg text-muted-foreground 
+                                        className="flex w-9 h-9 items-center justify-center rounded-lg text-muted-foreground 
                                         hover:text-foreground hover:bg-secondary transition-colors relative"
                                     >
                                         <Heart size={18} />
@@ -180,7 +191,7 @@ export default function Navbar() {
                                     </Link>
                                     <Link 
                                         href="/cart" 
-                                        className="w-10 h-10 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors relative"
+                                        className="w-9 h-9 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors relative"
                                     >
                                         <ShoppingBag size={18} />
                                         <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 rounded-full bg-orange-500 

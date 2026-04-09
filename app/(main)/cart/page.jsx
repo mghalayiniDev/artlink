@@ -2,15 +2,15 @@
 
 import ContentWrapper from "@/app/components/ContentWrapper"
 import { api } from "@/convex/_generated/api"
-import { useConvexAuth, useMutation, useQuery } from "convex/react"
+import { useAction, useConvexAuth, useMutation, useQuery } from "convex/react"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowLeft, Heart, Loader2, Minus, Plus, RotateCcw, ShieldCheck, Tag, Trash2, Truck } from "lucide-react"
+import { ArrowLeft, Heart, Loader2, Minus, Plus, RotateCcw, ShieldCheck, ShoppingBag, Tag, Trash2, Truck } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import Image from "next/image"
 import Link from "next/link"
+import { useState } from "react"
 import { toast } from "sonner"
 
-// Helper function for UAE currency formatting (always 2 decimal places)
 const formatPrice = (amount) => {
     return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
@@ -26,6 +26,9 @@ export default function Cart() {
 
     const updateCartQty = useMutation(api.cart.updateCartQuantity)
     const removeFromCart = useMutation(api.cart.removeFromCart)
+
+    const createCheckout = useAction(api.stripe.createPaymentCheckout)
+    const [isCheckingOut, setIsCheckingOut] = useState(false)
 
     const totalItemsCount = cartItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
@@ -80,6 +83,29 @@ export default function Cart() {
         }
     }
 
+    const handleCheckout = async () => {
+        if (isCheckingOut) return
+        
+        setIsCheckingOut(true)
+
+        try {
+            const response = await createCheckout({ locale: locale })
+            
+            if (response.success === false) {
+                toast.error(response.message || "Failed to process checkout")
+                return
+            }
+            
+            if (response.url) {
+                window.location.href = response.url
+            }
+        } catch (error) {
+            toast.error("A network error occurred. Please try again.")
+        } finally {
+            setIsCheckingOut(false)
+        }
+    }
+
     return (
         <section className="min-h-[60vh] pt-14 pb-24">
             <ContentWrapper>
@@ -112,41 +138,60 @@ export default function Cart() {
 
                 {/* Body */}
                 {cartLoading ? (
-                    <div className="grid lg:grid-cols-3 gap-10">
+                    <div className="grid lg:grid-cols-3 gap-14">
                         <div className="lg:col-span-2 space-y-4">
-                            {Array.from({ length: 4 }).map((_, idx) => (
-                                <div key={idx} className="w-full h-24 bg-neutral-100 rounded-xl animate-pulse" />
+                            <div className="w-full h-12 bg-neutral-100 animate-pulse" />
+                            <div className="w-full h-px bg-neutral-100" />
+                            {Array.from({ length: 3 }).map((_, idx) => (
+                                <div key={idx} className="w-full h-34 bg-neutral-100 rounded-xl animate-pulse" />
                             ))}
                         </div>
 
                         <div className="lg:col-span-1">
-                            <div className="w-full h-[45vh] bg-neutral-100 rounded-xl animate-pulse" />
+                            <div className="w-full h-[50vh] bg-neutral-100 rounded-xl animate-pulse" />
                         </div>
                     </div>
                 ) : (
                     (cartError || !cartItems || cartItems.length === 0) ? (
                         <motion.div
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="flex flex-col items-center justify-center py-18 px-4 md:border rounded-xl shadow-sm"
+                            transition={{ duration: 0.5 }}
+                            className="flex flex-col items-center justify-center py-6"
                         >
-                            <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-6">
-                                <Heart size={32} className="text-muted-foreground" />
+                            <div className="relative mb-8">
+                            <div className="w-28 h-28 rounded-2xl bg-secondary/50 border border-border flex items-center justify-center">
+                                <ShoppingBag size={40} className="text-muted-foreground/40" />
                             </div>
-                            <span className="text-[1.75rem] block font-extrabold text-foreground mb-2">{t("titleError")}</span>
-                            <p className="text-[0.9rem] text-muted-foreground mb-6 text-center max-w-sm">
+                            <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center">
+                                <span className="text-accent-foreground text-xs font-bold">0</span>
+                            </div>
+                            </div>
+                            <span className="text-2xl block font-bold text-foreground mb-2">{t("titleError")}</span>
+                            <p className="text-sm text-muted-foreground mb-8 text-center max-w-md leading-relaxed">
                                 {t("descError")}
                             </p>
+                            <div className="flex items-center gap-3">
                             <Link
-                                href="/shop"
-                                className="inline-flex items-center gap-2 px-8 py-3 bg-orange-500 text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity"
+                                href="/"
+                                className="inline-flex items-center gap-2 px-7 py-3 bg-orange-500 text-accent-foreground text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity"
                             >
-                                <ArrowLeft size={15} />
                                 {t("btnError")}
                             </Link>
+                            <Link
+                                href="/wishlist"
+                                className="inline-flex items-center gap-2 px-7 py-3 border border-border text-foreground text-sm font-medium rounded-lg hover:bg-secondary transition-colors"
+                            >
+                                {t("btnWishlist")}
+                            </Link>
+                            </div>
+                            <div className="flex items-center gap-6 mt-10 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1.5"><ShieldCheck size={13} /> {t("securePay")}</span>
+                                <span className="flex items-center gap-1.5"><RotateCcw size={13} /> {t("easyReturns")}</span>
+                            </div>
                         </motion.div>
                     ) : (
-                        <div className="grid lg:grid-cols-3 gap-14">
+                        <div className="grid lg:grid-cols-3 gap-16">
                             {/* Cart Items List */}
                             <div className="lg:col-span-2 space-y-4">
                                 {/* Table Header */}
@@ -167,13 +212,13 @@ export default function Cart() {
 
                                         return (
                                             <motion.div
-                                                key={`${item.productId}-${item.color.code}-${item.dimensions.h}`}
+                                                key={`${item.productId}-${item.color.code}-${item.dimensions.h}-${idx}`}
                                                 layout
                                                 initial={{ opacity: 0, x: -20 }}
                                                 animate={{ opacity: 1, x: 0 }}
                                                 exit={{ opacity: 0, x: 20, height: 0 }}
                                                 transition={{ duration: 0.3 }}
-                                                className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 items-center p-4 rounded-xl bg-neutral-50 border border-border"
+                                                className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 items-center p-6 rounded-xl bg-neutral-50 border border-border"
                                             >
                                                 {/* Product Col */}
                                                 <div className="flex items-center gap-4">
@@ -313,8 +358,19 @@ export default function Cart() {
                                         <span className="text-[1.225rem] block font-bold text-foreground">{formatPrice(finalTotal)} {t("currency")}</span>
                                     </div>
 
-                                    <button className="w-full py-3.5 cursor-pointer bg-orange-500 text-white text-sm font-bold rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-                                        {t("checkoutBtn")}
+                                    <button 
+                                        onClick={handleCheckout}
+                                        disabled={isCheckingOut}
+                                        className="w-full py-3.5 cursor-pointer bg-orange-500 text-white text-sm font-bold rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    >
+                                        {isCheckingOut ? (
+                                            <>
+                                                <Loader2 size={16} className="animate-spin" /> 
+                                                {t("checkoutBtn")}...
+                                            </>
+                                        ) : (
+                                            t("checkoutBtn")
+                                        )}
                                     </button>
 
                                     {/* Trust Signals */}

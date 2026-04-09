@@ -90,26 +90,51 @@ export default defineSchema({
         products: v.array(
             v.object({
                 productId: v.id("products"),
-                nameAtPurchase: v.string(),
+                nameAtPurchase: v.object({ en: v.string(), ar: v.string() }),
                 priceAtPurchase: v.number(),
+                imageAtPurchase: v.string(),
                 quantity: v.number(),
-                dimensions: v.object({ h: v.number(), w: v.number(), d: v.number() })
+                color: v.object({
+                    name: v.object({ en: v.string(), ar: v.string() }),
+                    code: v.string() 
+                }),
+                dimensions: v.object({ 
+                    h: v.number(), 
+                    w: v.number(), 
+                    d: v.number() 
+                })
             })
         ),
+        shippingAddress: v.object({
+            city: v.optional(v.string()),
+            country: v.optional(v.string()),
+            line1: v.optional(v.string()),
+            line2: v.optional(v.string()),
+            postal_code: v.optional(v.string()),
+        }),
+        phone: v.optional(v.string()),
+        paymentMethod: v.string(), 
+        cardLast4: v.optional(v.string()),
+        invoiceUrl: v.optional(v.string()),
+        vat: v.number(),
         totalAmount: v.number(),
+        trackingNumber: v.optional(v.string()),
+        stripeSessionId: v.optional(v.string()),
+        discountAmount: v.optional(v.number()), 
+        promoCodeText: v.optional(v.string()),
         status: v.union(
-            v.literal("pending"), 
-            v.literal("paid"), 
-            v.literal("shipped"), 
-            v.literal("delivered"), 
-            v.literal("cancelled")
+            v.literal("paid"),  
+            v.literal("processing"),
+            v.literal("shipped"),   
+            v.literal("delivered"),  
+            v.literal("cancelled"), 
+            v.literal("refunded")   
         ),
-        address: v.string(),
-        paymentMethod: v.string(),
         createdAt: v.number()
     })
         .index("by_user_id", ["userId"])
-        .index("by_status", ["status"]),
+        .index("by_status", ["status"])
+        .index("by_stripe_session_id", ["stripeSessionId"]),
 
     notifications: defineTable({
         userId: v.string(),

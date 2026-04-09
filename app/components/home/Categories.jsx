@@ -2,13 +2,14 @@
 
 import ContentWrapper from "../ContentWrapper"
 import { motion } from "framer-motion"
-import { useTranslations } from "use-intl"
+import { useLocale, useTranslations } from "use-intl"
 import CategoryCard from "./CategoryCard"
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 
 export default function Categories({ categories, categoriesLoading, categoriesError }) {
     const t = useTranslations("categories")
+    const locale = useLocale()
 
     const totalColumns = 
         categories?.length === 2 ? "md:grid-cols-2" : "md:grid-cols-2 lg:grid-cols-3"
@@ -46,13 +47,12 @@ export default function Categories({ categories, categoriesLoading, categoriesEr
                                 <span className="font-extrabold uppercase text-4xl md:text-[2.65rem] text-foreground mt-2 block">
                                     {t('header')}
                                 </span>
-                                {/* Navigation Arrows */}
                                 <Link
                                     href="/shop"
                                     className="font-semibold text-[0.825rem] flex items-center gap-2.5 mt-auto hover:underline w-fit"
                                 >
                                     {t("viewAllCategories")}
-                                    <ArrowRight width={12} height={12} />
+                                    <ArrowRight width={12} height={12} className={`${locale === "ar" ? "rotate-180" : ""}`} />
                                 </Link>
                             </div>
                         </motion.div>

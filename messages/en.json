@@ -15,7 +15,8 @@
         "searching": "Searching",
         "noResultsTitle": "No results found",
         "noResultsDesc": "We couldn't find anything matching",
-        "viewAll": "View all results"
+        "viewAll": "View all results",
+        "myOrders": "My Orders"
     },
     "logo": {
         "main": "Artlink"
@@ -141,8 +142,8 @@
         "sub": "How it works",
         "title1": "From vision",
         "title2": "To reality",
-        "step1Title": "Consultation",
-        "step1Desc": "Collaborate with our experts to select the perfect door design and materials for your project.",
+        "step1Title": "Customize Your Door",
+        "step1Desc": "Select your desired dimensions — width, height, and depth — along with your preferred color and finish to create a product tailored to your space.",
         "step2Title": "Design & Craft",
         "step2Desc": "Our skilled artisans meticulously craft each door to your exact specifications, ensuring superior quality.",
         "step3Title": "Delivery & Install",
@@ -163,7 +164,7 @@
     },
     "footer": {
         "desc": "Premium architectural doors crafted for those who demand excellence in every detail",
-        "emailPlaceholder": "Your email",
+        "emailPlaceholder": "Your email address",
         "categories": "Categories",
         "company": "Company",
         "home": "Home",
@@ -393,13 +394,17 @@
         "home": "Home",
         "privacy": "Privacy Policy",
         "lastUpdate": "Last updated: March 27, 2026",
-        "contact": "For privacy inquiries, email us at"
+        "haveQuestions": "Have Questions?",
+        "haveQuestionsDesc": "Our team is here to help clarify any part of these terms. We'll get back to you within 24 hours.",
+        "contact": "Contact Us"
     },
     "terms": {
         "home": "Home",
         "terms": "Terms of service",
         "lastUpdate": "Last updated: March 27, 2026",
-        "contact": "For terms inquiries, email us at"
+        "haveQuestions": "Have Questions?",
+        "haveQuestionsDesc": "Our team is here to help clarify any part of these terms. We'll get back to you within 24 hours.",
+        "contact": "Contact Us"
     },
     "404": {
         "header": "Page Not Found",
@@ -422,6 +427,7 @@
         "titleError": "Your wishlist is empty",
         "descError": "Browse our collection and tap the heart icon to save your favorite doors",
         "btnError": "Explore Collection",
+        "btnError2": "View Cart",
         "youMightLikeHeader": "You Might Also Like"
     },
     "cart": {
@@ -432,8 +438,9 @@
         "item": "item",
         "saved": "in cart",
         "titleError": "Your cart is empty",
-        "descError": "Browse our collection and add items to your cart",
+        "descError": "Your shopping cart is waiting to be filled with our premium door collection. Start exploring to find the perfect fit for your space.",
         "btnError": "Explore Collection",
+        "btnWishlist": "View Wishlist",
         "product": "Product",
         "price": "Price",
         "quantity": "Quantity",
@@ -452,6 +459,7 @@
         "checkoutBtn": "Proceed to Checkout",
         "freeShipping": "Free Shipping",
         "easyReturns": "Easy Returns",
-        "invalidPromoCode": "Invalid promo code"
+        "invalidPromoCode": "Invalid promo code",
+        "checkoutError": "Failed to initiate checkout. Please try again"
     }
 }

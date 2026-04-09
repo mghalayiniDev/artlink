@@ -85,10 +85,11 @@ export const addToCart = mutation({
         const validId = ctx.db.normalizeId("products", args.productId)
         if (!validId) return { success: false, message: "Invalid product ID." }
 
-        if (args.quantity < 1) return { success: false, message: "Quantity must be at least 1." }
+        if (!Number.isInteger(args.quantity) || args.quantity < 1) return { success: false, message: "Quantity must be a whole number of at least 1." }
 
         const { h, w, d } = args.dimensions
         if (h <= 0 || w <= 0 || d <= 0) return { success: false, message: "Dimensions must be greater than zero." }
+        if (h <= 0 || w <= 0 || d <= 0 || h > 500 || w > 500 || d > 100) return { success: false, message: "Dimensions are invalid or exceed factory limits." }
 
         if (args.color.code.length > 50 || args.color.name.en.length > 100 || args.color.name.ar.length > 100) {
             return { success: false, message: "Invalid color format." }
@@ -191,6 +192,7 @@ export const updateCartQuantity = mutation({
 
         if (itemIdx === -1) return { success: false, message: "Item not found in cart." }
 
+        if (!Number.isInteger(args.newQuantity)) return { success: false, message: "Quantity must be a whole number." }
         if (args.newQuantity < 1) {
             const updatedCart = existingCart.filter((_, idx) => idx !== itemIdx)
             await ctx.db.patch(user._id, { cart: updatedCart });

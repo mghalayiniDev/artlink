@@ -14,6 +14,7 @@
     "@clerk/nextjs": "^6.36.5",
     "@convex-dev/rate-limiter": "^0.3.2",
     "@convex-dev/resend": "^0.2.3",
+    "@convex-dev/stripe": "^0.1.4",
     "@google/generative-ai": "^0.24.1",
     "@radix-ui/react-checkbox": "^1.3.3",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -36,6 +37,7 @@
     "react-dom": "^19.2.3",
     "recharts": "^3.7.0",
     "sonner": "^2.0.7",
+    "stripe": "^22.0.0",
     "svix": "^1.84.1",
     "tailwind-merge": "^3.4.0"
   },
