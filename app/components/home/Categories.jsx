@@ -40,7 +40,7 @@ export default function Categories({ categories, categoriesLoading, categoriesEr
                             transition={{ duration: 0.6 }}
                             className="mb-20"
                         >
-                            <span className="text-orange-500 font-mono text-sm tracking-widest">
+                            <span className="text-orange-500 font-bold text-sm tracking-widest">
                                 {t('subheader')}
                             </span>
                             <div className="flex flex-col gap-2.5 lg:flex-row lg:justify-between lg:items-center">
@@ -85,12 +85,12 @@ export default function Categories({ categories, categoriesLoading, categoriesEr
                                     {t('custom_title_1')}
                                     <br />{t('custom_title_2')}
                                 </span>
-                                <p className="text-sm text-background/50 mt-2 max-w-xs">
+                                <p className="text-sm text-background/50 mt-2 max-w-90">
                                     {t('custom_desc')}
                                 </p>
                                 <Link 
                                     href="/shop" 
-                                    className="inline-flex items-center gap-2 mt-5 px-6 py-3  bg-linear-to-r from-[#d8b054] to-[#d8b054]/70 
+                                    className="inline-flex items-center gap-2 mt-5 px-6 py-3 bg-linear-to-r from-[#d8b054] to-[#d8b054]/70 
                                     text-accent-foreground text-sm font-bold rounded-lg hover:opacity-90 transition-opacity w-fit"
                                 >
                                     {t('custom_btn')} <ArrowRight size={14} className="rtl:rotate-180" />
@@ -111,7 +111,7 @@ export default function Categories({ categories, categoriesLoading, categoriesEr
                                     {t('story_title_1')}
                                     <br />{t('story_title_2')}
                                 </span>
-                                <p className="text-sm text-muted-foreground mt-2 max-w-xs">
+                                <p className="text-sm text-muted-foreground mt-2 max-w-90">
                                     {t('story_desc')}
                                 </p>
                                 <Link 

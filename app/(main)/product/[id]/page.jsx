@@ -31,7 +31,6 @@ export default function ProductPage() {
     const toggleWishlist = useMutation(api.products.addProductToWishList)
     const addToCartMutation = useMutation(api.cart.addToCart)
 
-
     const t = useTranslations("product")
     const locale = useLocale()
 

@@ -461,5 +461,63 @@
         "easyReturns": "إرجاع سهل",
         "invalidPromoCode": "كود الخصم غير صالح",
         "checkoutError": "فشل بدء عملية الدفع. يرجى المحاولة مرة أخرى"
+    },
+    "orders": {
+        "home": "الصفحة الرئيسية",
+        "orders": "طلباتي",
+        "items": "طلبات",
+        "item": "طلب",
+        "total": "المجموع",
+        "aed": "د.إ",
+        "totalOrders": "إجمالي الطلبات",
+        "totalSpent": "إجمالي الإنفاق",
+        "totalDelivered": "تم التوصيل",
+        "totalDelivery": "قيد التوصيل",
+        "noOrders": "لم يتم العثور على طلبات",
+        "noOrdersDesc": "لم تقم بتقديم أي طلبات بعد. ابدأ في استكشاف تشكيلتنا واعثر على الأبواب المثالية لمساحتك.",
+        "shopBtn": "تسوق الآن",
+        "status": {
+            "paid": "تم الدفع",
+            "processing": "قيد المعالجة",
+            "delivering": "في الطريق للتوصيل",
+            "delivered": "تم التوصيل",
+            "cancelled": "ملغى",
+            "refunded": "مستردة"
+        },
+        "product": "منتج",
+        "products": "منتجات"
+    },
+    "order": {
+        "order_not_found": "الطلب غير موجود",
+        "order_not_found_desc": "رابط هذا الطلب غير صالح أو منتهي الصلاحية. دعنا نعود بك إلى الكتالوج الرئيسي",
+        "return_to_shop": "العودة إلى المتجر",
+        "home": "الصفحة الرئيسية",
+        "orders": "الطلبات",
+        "backToOrder": "العودة إلى الطلبات",
+        "status": {
+            "paid": "تم الدفع",
+            "processing": "قيد المعالجة",
+            "delivering": "في الطريق للتوصيل",
+            "delivered": "تم التوصيل",
+            "cancelled": "ملغى",
+            "refunded": "مستردة"
+        },
+        "product": "منتج",
+        "products": "منتجات",
+        "invoice": "الفاتورة",
+        "support": "الدعم",
+        "estimatedDelivery": "التوصيل المتوقع:",
+        "header2": "عناصر الطلب",
+        "summary": "ملخص الطلب",
+        "subtotal": "المجموع الفرعي",
+        "aed": "د.إ",
+        "shipping": "الشحن",
+        "free": "مجاني",
+        "vat": "ضريبة القيمة المضافة",
+        "total": "المجموع الإجمالي",
+        "shipAddress": "عنوان الشحن",
+        "paymentMethod": "طريقة الدفع",
+        "cardEnding": "ينتهي بـ",
+        "continueShopping": "مواصلة التسوق"
     }
 }

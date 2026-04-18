@@ -128,7 +128,7 @@ export default function HeroCoursel() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.5 }}
-                            className="inline-block text-orange-500 font-mono text-sm tracking-[0.3em] uppercase mb-6"
+                            className="inline-block text-orange-500 text-sm tracking-[0.3em] uppercase mb-6 font-bold"
                         >
                             {slide.subtitle}
                         </motion.span>

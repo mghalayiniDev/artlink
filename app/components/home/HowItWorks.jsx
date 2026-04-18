@@ -43,7 +43,7 @@ export default function HowItWorks() {
                     transition={{ duration: 0.6 }}
                     className="text-center mb-24"
                 >
-                    <span className="text-orange-500 font-mono text-sm tracking-widest block uppercase">
+                    <span className="text-orange-500 font-bold text-sm tracking-widest block uppercase">
                         {t('sub')}
                     </span>
                     <span className="font-heading font-extrabold uppercase text-4xl md:text-6xl text-foreground mt-4 block">

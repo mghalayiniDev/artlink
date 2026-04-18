@@ -5,8 +5,9 @@ import ContentWrapper from "./ContentWrapper"
 import Logo from "./Logo"
 import { ArrowRight, Instagram, MapPin, Phone } from "lucide-react"
 import Link from "next/link"
-import { useQuery } from "convex/react"
+import { useMutation, useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
+import { useEffect, useRef, useState } from "react"
 
 export default function Footer() {
     const t = useTranslations("footer")
@@ -15,6 +16,58 @@ export default function Footer() {
     const categories = useQuery(api.categories.getAllCategories)
     const categoriesLoading = categories === undefined
     const categoriesError = categories === null
+    
+    const [email, setEmail] = useState("")
+    const [message, setMessage] = useState("")
+    const [isError, setIsError] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
+    const messageTimerRef = useRef(null)
+
+    const subscribeToNewsletter = useMutation(api.newsletter.subscribe)
+
+    useEffect(() => {
+        return () => {
+            if (messageTimerRef.current) {
+                clearTimeout(messageTimerRef.current)
+            }
+        }
+    }, [])
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+
+        if (messageTimerRef.current) {
+            clearTimeout(messageTimerRef.current)
+        }
+
+        setIsSubmitting(true)
+        setMessage("")
+        setIsError(false)
+
+        try {
+            const response = await subscribeToNewsletter({ email })
+            
+            setMessage(response.message)
+            
+            if (response.success) {
+                setEmail("")
+                setIsError(false)
+            } else {
+                setIsError(true)
+            }
+        } catch (error) {
+            setIsError(true)
+            setMessage(error instanceof Error ? error.message : "Something went wrong.")
+        } finally {
+            setIsSubmitting(false)
+
+            messageTimerRef.current = setTimeout(() => {
+                setMessage("")
+                setIsError(false)
+            }, 4000)
+        }
+    }
 
     const footerLinks = {
         company: [
@@ -65,18 +118,36 @@ export default function Footer() {
                             {t('desc')}
                         </p>
                         {/* Newsletter */}
-                        <div className="flex">
-                            <input
-                                type="email"
-                                placeholder={t("emailPlaceholder")}
-                                className="flex-1 h-12 px-4 bg-transparent border border-background/30 text-background placeholder:text-background/40 
-                                placeholder:text-xs placeholder:uppercase focus:outline-none focus:border-background/60 text-[0.85rem]"
-                            />
-                            <button className={`w-12 h-12 bg-orange-500 flex items-center justify-center hover:opacity-80 
-                            transition-opacity border-y ${locale === "ar" ? "border-l" : "border-r"} border-background/30 cursor-pointer`}>
-                                <ArrowRight className={`w-5 h-5 text-background ${locale === "ar" ? "rotate-180" : ""}`} />
-                            </button>
-                        </div>
+                        <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+                            <div className="flex">
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    disabled={isSubmitting}
+                                    placeholder={t("emailPlaceholder")}
+                                    required
+                                    className="flex-1 h-12 px-4 bg-transparent border border-background/30 text-background placeholder:text-background/40 
+                                    placeholder:text-xs placeholder:uppercase focus:outline-none focus:border-background/60 text-[0.85rem] disabled:opacity-50"
+                                />
+                                <button 
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className={`w-12 h-12 bg-orange-500 flex items-center justify-center transition-opacity border-y 
+                                    ${locale === "ar" ? "border-l" : "border-r"} border-background/30 cursor-pointer
+                                    ${isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:opacity-80"}`}
+                                >
+                                    <ArrowRight className={`w-5 h-5 text-background ${locale === "ar" ? "rotate-180" : ""} ${isSubmitting ? "animate-pulse" : ""}`} />
+                                </button>
+                            </div>
+                            
+                            {/* Feedback Message */}
+                            {message && (
+                                <p className={`text-[0.8rem] transition-all duration-300 ${isError ? "text-red-400" : "text-green-400"}`}>
+                                    {message}
+                                </p>
+                            )}
+                        </form>
                     </div>
 
                     {/* Products */}

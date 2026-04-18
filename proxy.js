@@ -3,7 +3,7 @@ import arcjet, { shield, tokenBucket, slidingWindow, detectBot } from "@arcjet/n
 import { NextResponse } from 'next/server'
 
 const isAdminRoute = createRouteMatcher(['/admin(.*)'])
-const isUserRoute = createRouteMatcher(['/cart', '/wishlist'])
+const isUserRoute = createRouteMatcher(['/cart', '/wishlist', '/orders(.*)', '/order(.*)'])
 const isAuthRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)'])
 
 const ajAuth = arcjet({

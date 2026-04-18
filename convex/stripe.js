@@ -169,7 +169,7 @@ export const createPaymentCheckout = action({
                 userId: identity.subject,
                 cartItems: JSON.stringify(minimalCartItems)
             },
-            success_url: `${process.env.HOST_URL}/orders?session_id={CHECKOUT_SESSION_ID}`,
+            success_url: `${process.env.HOST_URL}/order/{CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.HOST_URL}/cart`,
             invoice_creation: {
                 enabled: true

@@ -125,7 +125,7 @@ export default defineSchema({
         status: v.union(
             v.literal("paid"),  
             v.literal("processing"),
-            v.literal("shipped"),   
+            v.literal("delivering"),
             v.literal("delivered"),  
             v.literal("cancelled"), 
             v.literal("refunded")   
@@ -156,4 +156,12 @@ export default defineSchema({
             searchField: "searchTexts",
             filterFields: ["type"]
         }),
+
+    newsletterSubscribers: defineTable({
+        email: v.string(),
+        isActive: v.boolean(),
+        createdAt: v.number()
+    })
+        .index("by_email", ["email"])
+        .index("by_status", ["isActive"]),
 })

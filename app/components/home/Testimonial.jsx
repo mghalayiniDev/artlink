@@ -52,7 +52,7 @@ export default function Testimonial() {
                     transition={{ duration: 0.6 }}
                     className="text-center mb-16 md:mb-22"
                 >
-                    <span className="text-gray-600 font-mono text-sm tracking-widest block uppercase">
+                    <span className="text-gray-600 font-bold text-sm tracking-widest block uppercase">
                         {t('sub')}
                     </span>
                     <span className="font-heading font-extrabold uppercase text-4xl md:text-[3.125rem] text-foreground mt-4 block">

@@ -1,5 +1,61 @@
 import { v } from "convex/values";
-import { internalMutation } from "./_generated/server"
+import { internalMutation, query } from "./_generated/server"
+
+export const getOrderBySessionId = query({
+    args: { 
+        sessionId: v.string()
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("Unauthorized: You must be logged in to view this order.")
+        }
+
+        const order = await ctx.db
+            .query("orders")
+            .withIndex("by_stripe_session_id", (q) => 
+                q.eq("stripeSessionId", args.sessionId)
+            )
+            .first()
+
+        if (!order) return null
+
+        const currentUser = await ctx.db
+            .query("users")
+            .withIndex("by_user_id", (q) => q.eq("userId", identity.subject))
+            .first()
+
+        if (!currentUser || currentUser._id !== order.userId) return null
+
+        return order
+    }
+})
+
+export const getUserOrders = query({
+    args: {},
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("Not authenticated")
+        }
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_user_id", (q) => q.eq("userId", identity.subject))
+            .unique()
+
+        if (!user) {
+            console.warn(`User ${identity.subject} not found in database`)
+            return []
+        }
+
+        return await ctx.db
+            .query("orders")
+            .withIndex("by_user_id", (q) => q.eq("userId", user._id))
+            .order("desc")
+            .collect()
+    }
+})
 
 export const createOrder = internalMutation({
     args: {

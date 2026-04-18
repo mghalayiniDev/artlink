@@ -42,7 +42,7 @@ export default function WhyChooseUs() {
                         viewport={{ once: true }}
                         transition={{ duration: 0.6 }}
                     >
-                        <span className="text-orange-500 font-mono text-sm tracking-widest uppercase block">{t('tag')}</span>
+                        <span className="text-orange-500 font-bold text-sm tracking-widest uppercase block">{t('tag')}</span>
                         <span className="font-extrabold uppercase text-4xl md:text-5xl text-background mt-4 mb-6 block">
                             {t('title')}<br />{t('title2')}
                         </span>
