@@ -2,7 +2,7 @@
 
 A production-grade, full-stack e-commerce platform built for the UAE market. Bilingual (English / Arabic 🇦🇪), real-time, and built to scale.
 
-![Landing Page](public/landing.png)
+![Landing Page](public/landing.jpg)
 
 ---
 
