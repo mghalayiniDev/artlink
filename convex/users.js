@@ -51,6 +51,7 @@ export const upsertFromClerk = internalMutation({
                 orders: [],
                 cart: []
             })
+            await ctx.runMutation(internal.stats.patch, { totalUsers: 1 })
         }
     }
 })
@@ -65,13 +66,7 @@ export const deleteFromClerk = internalMutation({
             .unique()
 
         if (user) {
-            // 2. Send the Goodbye Email (using the data we just found)
-            await ctx.runMutation(internal.resend.sendDeleteUserEmail, {
-                email: user.email,
-                name: user.name
-            })
-
-            // 3. Notify Admins
+            // 2. Notify Admins
             await ctx.runMutation(internal.notifications.notifyAdmins, {
                 userId: args.userId,
                 title: {
@@ -85,8 +80,9 @@ export const deleteFromClerk = internalMutation({
                 type: "alert",
             })
 
-            // 4. FINALLY, delete the user record
+            // 3. Delete the user record
             await ctx.db.delete(user._id)
+            await ctx.runMutation(internal.stats.patch, { totalUsers: -1 })
         }
     }
 })

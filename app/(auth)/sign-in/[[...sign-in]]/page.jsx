@@ -8,7 +8,6 @@ import Image from "next/image"
 import Languagedropdown from "@/app/components/header/LanguageDropdown"
 import Link from "next/link"
 import { useClerk } from "@clerk/nextjs"
-import { Skeleton } from "@/components/ui/skeleton"
 import Header from "@/app/components/auth/Header"
 
 export default function SignIn() {
@@ -18,27 +17,34 @@ export default function SignIn() {
 
      if (!loaded) {
         return (
-            <div className="flex flex-col gap-3.5">
-                <div className="flex flex-col gap-3 my-9">
-                    <Skeleton className={"w-[50%] h-8"} />
-                    <Skeleton className={"w-[80%] h-4.5"} />
+            <div className="flex flex-col animate-pulse">
+                {/* Header */}
+                <div className="flex flex-col gap-2 my-9">
+                    <div className="h-9 w-[48%] bg-gray-100" />
+                    <div className="h-4 w-[72%] bg-gray-100 mt-1" />
                 </div>
-                <div className="mt-6">
-                    <Skeleton className="w-[30%] h-3.5" />
-                    <Skeleton className="w-full h-10 mt-2.5" />
+                {/* Email label + input */}
+                <div>
+                    <div className="h-3.5 w-[20%] bg-gray-100" />
+                    <div className="h-11.5 w-full bg-gray-100 border border-gray-200 mt-3" />
                 </div>
-                <Skeleton className="mt-6 w-full h-10" />
-                <Skeleton className="my-8 h-0.5 w-full" />
-                <Skeleton className="w-full h-10" />
-                <Skeleton className="w-full h-10 mt-2.5" />
-                <Skeleton className="w-[70%] mx-auto h-5 mt-2.5" />
+                {/* Submit */}
+                <div className="h-11.5 w-full bg-gray-100 mt-7" />
+                {/* Or divider */}
+                <div className="my-10 h-px w-full bg-gray-200" />
+                {/* Google */}
+                <div className="h-11.5 w-full bg-gray-100" />
+                {/* Apple */}
+                <div className="h-11.5 w-full bg-gray-100 mt-3" />
+                {/* Bottom nav */}
+                <div className="h-4 w-[58%] mx-auto bg-gray-100 mt-8" />
             </div>
         )
     }
-    
+
     return (
-        <SignInElements.Root 
-            className="flex flex-col gap-3.5" 
+        <SignInElements.Root
+            className="flex flex-col gap-3.5"
             transferable={false}
         >
             <Clerk.Loading>
@@ -47,29 +53,29 @@ export default function SignIn() {
                         {/* Start of sign in */}
                         <SignInElements.Step name="start">
                             {/* Header */}
-                            <Header 
+                            <Header
                                 header={t("signIn.header")}
                                 desc={t("signIn.desc")}
                             />
                             <Clerk.Field name="identifier">
                                 <Clerk.Label
-                                    className="text-white/80 text-sm block"
+                                    className="text-gray-700 text-sm block"
                                 >
                                     {t("lables.email")}
                                 </Clerk.Label>
-                                <Clerk.Input 
+                                <Clerk.Input
                                     type="email"
                                     placeholder={t("placeholders.email")}
-                                    className="bg-[#333333] border px-4 border-white/10 text-white placeholder:text-white/40 h-11.5 
-                                    focus:border-[#e88839] focus:ring-1 focus:ring-[#e88839] outline-none
-                                    data-invalid:border-red-600 data-invalid:text-red-600 block w-full mt-3 text-[0.85rem]"
+                                    className="bg-gray-50 border px-4 border-gray-200 text-gray-900 placeholder:text-gray-400 h-11.5
+                                    focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none
+                                    data-invalid:border-red-500 data-invalid:text-red-600 block w-full mt-3 text-[0.85rem]"
                                     required
                                 />
                                 <Clerk.FieldError className="text-red-500 text-xs animate-in fade-in duration-300 block" />
                             </Clerk.Field>
-                            <SignInElements.Action 
+                            <SignInElements.Action
                                 submit
-                                className="w-full h-11.5 bg-linear-to-r from-[#dd7825] via-[#db8b4a] flex items-center justify-center gap-3 mt-7 to-[#c99061] text-black font-semibold hover:opacity-90 transition-opacity group text-[0.85rem] px-6 cursor-pointer disabled:cursor-default"
+                                className="w-full h-11.5 bg-orange-500 hover:bg-orange-600 flex items-center justify-center gap-3 mt-7 text-white font-semibold transition-colors group text-[0.85rem] px-6 cursor-pointer disabled:cursor-default disabled:opacity-70"
                                 disabled={isGlobalLoading}
                                 >
                                 <Clerk.Loading>
@@ -89,15 +95,15 @@ export default function SignIn() {
                                 </Clerk.Loading>
                             </SignInElements.Action>
                             <Clerk.GlobalError className="text-red-500 text-xs animate-in fade-in duration-300 w-full text-center block mt-3" />
-                            <div className="my-10 h-0.5 w-full bg-white/10 relative"> 
-                                <p className="absolute top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%] bg-[#1a1a1a] text-white/40 select-none px-4">
+                            <div className="my-10 h-px w-full bg-gray-200 relative">
+                                <p className="absolute top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%] bg-white text-gray-400 select-none px-4 text-sm">
                                     {t("or")}
                                 </p>
                             </div>
-                            <Clerk.Connection 
+                            <Clerk.Connection
                                 name="google"
-                                className="bg-[#333333] border px-4 border-white/10 text-white placeholder:text-white/40 h-11.5 disabled:cursor-default
-                                outline-none w-full mt-3 text-[0.825rem] cursor-pointer hover:brightness-110 items-center flex justify-center gap-4" 
+                                className="bg-gray-50 border px-4 border-gray-200 text-gray-700 h-11.5 disabled:cursor-default
+                                outline-none w-full mt-3 text-[0.825rem] cursor-pointer hover:bg-gray-100 hover:border-gray-300 transition-colors items-center flex justify-center gap-4"
                                 disabled={isGlobalLoading}
                             >
                                 <Clerk.Loading scope="provider:google">
@@ -106,7 +112,7 @@ export default function SignIn() {
                                             <Loader className="size-4 animate-spin" />
                                         ) : (
                                             <>
-                                                <Image 
+                                                <Image
                                                     width={18}
                                                     height={18}
                                                     alt="google"
@@ -118,10 +124,10 @@ export default function SignIn() {
                                     }
                                 </Clerk.Loading>
                             </Clerk.Connection>
-                            <Clerk.Connection 
+                            <Clerk.Connection
                                 name="apple"
-                                className="bg-[#333333] border px-4 border-white/10 text-white placeholder:text-white/40 h-11.5 disabled:cursor-default
-                                outline-none w-full mt-6 text-[0.825rem] cursor-pointer hover:brightness-110 items-center flex justify-center gap-4" 
+                                className="bg-gray-50 border px-4 border-gray-200 text-gray-700 h-11.5 disabled:cursor-default
+                                outline-none w-full mt-3 text-[0.825rem] cursor-pointer hover:bg-gray-100 hover:border-gray-300 transition-colors items-center flex justify-center gap-4"
                                 disabled={isGlobalLoading}
                             >
                                 <Clerk.Loading scope="provider:apple">
@@ -130,10 +136,10 @@ export default function SignIn() {
                                             <Loader className="size-4 animate-spin" />
                                         ) : (
                                             <>
-                                                <Image 
+                                                <Image
                                                     width={18}
                                                     height={18}
-                                                    alt="google"
+                                                    alt="apple"
                                                     src="/icons/apple.png"
                                                 />
                                                 {t("signIn.appleConnc")}
@@ -146,11 +152,11 @@ export default function SignIn() {
 
                         {/* Captcha after google login */}
                         <SignInElements.Step name="sso-callback">
-                            <div className="flex items-center justify-center py-12 text-white">
-                                <Loader 
+                            <div className="flex items-center justify-center py-12 text-gray-700">
+                                <Loader
                                     width={30}
                                     height={30}
-                                    className="text-[#db8b4a] animate-spin"
+                                    className="text-orange-500 animate-spin"
                                 />
                             </div>
                             <SignInElements.Captcha />
@@ -160,30 +166,30 @@ export default function SignIn() {
                         <SignInElements.Step name="verifications">
                             <SignInElements.Strategy name="email_code">
                                 {/* Header */}
-                                <Header 
+                                <Header
                                     header={t("signIn.verifHeader")}
                                     desc={t("signUp.verifyDesc")}
                                 />
                                 <Clerk.Field name="code">
-                                    <Clerk.Label 
-                                        className="text-white/80 text-sm block"
+                                    <Clerk.Label
+                                        className="text-gray-700 text-sm block"
                                     >
                                         {t("lables.verifyCode")}
                                     </Clerk.Label>
-                                    <Clerk.Input 
+                                    <Clerk.Input
                                         type="text"
                                         placeholder={t("placeholders.verifyCode")}
-                                        className="bg-[#333333] border px-4 border-white/10 text-white placeholder:text-white/40 h-11.5 
-                                        focus:border-[#e88839] focus:ring-1 focus:ring-[#e88839] outline-none
-                                        data-invalid:border-red-600 data-invalid:text-red-600 block w-full mt-3 text-[0.85rem]"
+                                        className="bg-gray-50 border px-4 border-gray-200 text-gray-900 placeholder:text-gray-400 h-11.5
+                                        focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none
+                                        data-invalid:border-red-500 data-invalid:text-red-600 block w-full mt-3 text-[0.85rem]"
                                         required
                                     />
                                     <Clerk.FieldError className="text-red-500 text-xs animate-in fade-in duration-300 block" />
                                 </Clerk.Field>
-                                <SignInElements.Action 
+                                <SignInElements.Action
                                     submit
-                                    className="w-full h-11.5 bg-linear-to-r from-[#dd7825] via-[#db8b4a] flex items-center justify-center gap-3 mt-7
-                                            to-[#c99061] text-black font-semibold hover:opacity-90 transition-opacity group text-[0.85rem] px-6 cursor-pointer"
+                                    className="w-full h-11.5 bg-orange-500 hover:bg-orange-600 flex items-center justify-center gap-3 mt-7
+                                            text-white font-semibold transition-colors group text-[0.85rem] px-6 cursor-pointer disabled:opacity-70"
                                     disabled={isGlobalLoading}
                                 >
                                     <Clerk.Loading>
@@ -205,11 +211,11 @@ export default function SignIn() {
                                 <div className="flex items-center justify-center pb-3">
                                     <SignInElements.Action
                                         resend
-                                        fallback={({ resendableAfter }) => 
-                                            <p className="text-white/80 text-[0.8rem] mt-4">
+                                        fallback={({ resendableAfter }) =>
+                                            <p className="text-gray-500 text-[0.8rem] mt-4">
                                                 {t("resendVerifCode", { resendableAfter })}
                                             </p>}
-                                        className="text-white/80 text-[0.8rem] mt-4 cursor-pointer hover:text-[#db8b4a]"
+                                        className="text-gray-500 text-[0.8rem] mt-4 cursor-pointer hover:text-orange-500 transition-colors"
                                     >
                                         {t("resendVerifBtn")}
                                     </SignInElements.Action>
@@ -218,15 +224,15 @@ export default function SignIn() {
                         </SignInElements.Step>
 
                         {/* Control actions */}
-                        <div className="w-full mt-8 flex items-center justify-center gap-4 md:gap-3 text-white/60 text-xs md:text-[0.875rem]">
+                        <div className="w-full mt-8 flex items-center justify-center gap-4 md:gap-3 text-gray-500 text-xs md:text-[0.875rem]">
                             {/* Account exists */}
                             <div className="flex items-center justify-center gap-1.5">
-                                <span className="text-white/60">
+                                <span className="text-gray-500">
                                     {t("signIn.signUp")}
                                 </span>
                                 <Link
                                     href="/sign-up"
-                                    className="text-[#e88839] font-medium hover:underline cursor-pointer"
+                                    className="text-orange-500 font-medium hover:underline cursor-pointer"
                                 >
                                     {t("signIn.signUpAc")}
                                 </Link>
@@ -234,7 +240,7 @@ export default function SignIn() {
                             <span className="hidden md:inline-block">·</span>
                             {/* Language dropdown */}
                             <div>
-                                <Languagedropdown />
+                                <Languagedropdown color="#6b7280" />
                             </div>
                         </div>
                     </>

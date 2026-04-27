@@ -31,14 +31,14 @@ export default function Categories({ categories, categoriesLoading, categoriesEr
             </ContentWrapper>
         ) : (
             (!categoriesError && categories.length >= 2) && (
-                <section className="relative w-full bg-background py-16 md:py-22 lg:py-30">
+                <section className="relative w-full bg-background py-20 md:py-28">
                     <ContentWrapper>
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.6 }}
-                            className="mb-20"
+                            className="mb-10"
                         >
                             <span className="text-orange-500 font-bold text-sm tracking-widest">
                                 {t('subheader')}
@@ -49,7 +49,7 @@ export default function Categories({ categories, categoriesLoading, categoriesEr
                                 </span>
                                 <Link
                                     href="/shop"
-                                    className="font-semibold text-[0.825rem] flex items-center gap-2.5 mt-auto hover:underline w-fit"
+                                    className="group inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-gray-600 hover:text-orange-500 transition-colors mt-auto w-fit"
                                 >
                                     {t("viewAllCategories")}
                                     <ArrowRight width={12} height={12} className={`${locale === "ar" ? "rotate-180" : ""}`} />
@@ -74,24 +74,22 @@ export default function Categories({ categories, categoriesLoading, categoriesEr
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ duration: 0.5, delay: 0.3 }}
-                                className="relative rounded-xl overflow-hidden bg-[#1c2840] p-8 md:p-10 flex flex-col justify-center min-h-[38vh]"
+                                className="relative rounded-xl overflow-hidden bg-foreground p-10 flex flex-col justify-center min-h-[42vh]"
                             >
-                                <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-[#d8b054]/10 -translate-y-1/2 translate-x-1/2" />
-                                <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-[#d8b054]/5 translate-y-1/2 -translate-x-1/2" />
-                                <p className="text-[10px] uppercase tracking-[0.3em] text-[#d8b054] font-bold mb-2">
+                                <p className="text-[10px] uppercase tracking-[0.3em] text-orange-400 font-bold mb-3">
                                     {t('custom_subheader')}
                                 </p>
                                 <span className="block text-3xl md:text-4xl font-heading font-extrabold text-background leading-tight">
                                     {t('custom_title_1')}
                                     <br />{t('custom_title_2')}
                                 </span>
-                                <p className="text-sm text-background/50 mt-2 max-w-90">
+                                <p className="text-sm text-background/50 mt-3 max-w-sm">
                                     {t('custom_desc')}
                                 </p>
-                                <Link 
-                                    href="/shop" 
-                                    className="inline-flex items-center gap-2 mt-5 px-6 py-3 bg-linear-to-r from-[#d8b054] to-[#d8b054]/70 
-                                    text-accent-foreground text-sm font-bold rounded-lg hover:opacity-90 transition-opacity w-fit"
+                                <Link
+                                    href="/shop"
+                                    className="inline-flex items-center gap-2 mt-6 px-8 h-11 bg-orange-500 hover:bg-orange-600
+                                    text-white text-sm font-bold rounded-lg transition-colors w-fit"
                                 >
                                     {t('custom_btn')} <ArrowRight size={14} className="rtl:rotate-180" />
                                 </Link>
@@ -101,22 +99,21 @@ export default function Categories({ categories, categoriesLoading, categoriesEr
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ duration: 0.5, delay: 0.4 }}
-                                className="relative rounded-xl overflow-hidden bg-[#f6f5f3] p-8 md:p-10 flex flex-col justify-center min-h-[38vh] border border-[#d8b054]/20"
+                                className="relative rounded-xl overflow-hidden bg-neutral-100/70 p-10 flex flex-col justify-center min-h-[42vh] border border-gray-200"
                             >
-                                <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-[#d8b054]/5 -translate-y-1/2 translate-x-1/2" />
-                                <p className="text-[10px] uppercase tracking-[0.3em] text-[#d8b054] font-bold mb-2">
+                                <p className="text-[10px] uppercase tracking-[0.3em] text-orange-500 font-bold mb-3">
                                     {t('story_subheader')}
                                 </p>
-                                <span className="block text-3xl md:text-4xl font-heading font-extrabold text-black leading-tight">
+                                <span className="block text-3xl md:text-4xl font-heading font-extrabold text-gray-900 leading-tight">
                                     {t('story_title_1')}
                                     <br />{t('story_title_2')}
                                 </span>
-                                <p className="text-sm text-muted-foreground mt-2 max-w-90">
+                                <p className="text-sm text-gray-500 mt-3 max-w-sm">
                                     {t('story_desc')}
                                 </p>
-                                <Link 
-                                    href="/about" 
-                                    className="inline-flex items-center gap-2 mt-5 px-6 py-3 bg-foreground text-background 
+                                <Link
+                                    href="/about"
+                                    className="inline-flex items-center gap-2 mt-6 px-8 h-11 bg-foreground text-background
                                     text-sm font-bold rounded-lg hover:opacity-90 transition-opacity w-fit"
                                 >
                                     {t('story_btn')} <ArrowRight size={14} className="rtl:rotate-180" />

@@ -1,6 +1,21 @@
 import { v } from "convex/values"
 import { internalMutation } from "./_generated/server"
 
+const RETENTION_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
+const BATCH_SIZE   = 100
+
+export const deleteOldNotifications = internalMutation({
+    args: {},
+    handler: async (ctx) => {
+        const cutoff = Date.now() - RETENTION_MS
+        const old = await ctx.db
+            .query("notifications")
+            .withIndex("by_created_at", q => q.lt("createdAt", cutoff))
+            .take(BATCH_SIZE)
+        await Promise.all(old.map(n => ctx.db.delete(n._id)))
+    },
+})
+
 export const notifyAdmins = internalMutation({
     args: {
         userId: v.string(),

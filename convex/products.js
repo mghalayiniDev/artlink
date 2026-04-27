@@ -1,5 +1,6 @@
 import { v } from "convex/values"
-import { mutation, query } from "./_generated/server"
+import { internalMutation, mutation, query } from "./_generated/server"
+import { paginationOptsValidator } from "convex/server"
 import { PRODUCT_FILTERS } from "@/constants"
 import RateLimiter from "@convex-dev/rate-limiter"
 import { components } from "./_generated/api"
@@ -90,23 +91,16 @@ export const getLandingPageData = query({
             categories.map(async (cat) => {
                 const previewProducts = await ctx.db
                     .query("products")
-                    .withIndex("by_category_status", (q) => 
+                    .withIndex("by_category_status", (q) =>
                         q.eq("categoryId", cat._id).eq("status", "active")
                     )
                     .order("desc")
                     .take(4)
 
-                const allActiveProducts = await ctx.db
-                    .query("products")
-                    .withIndex("by_category_status", (q) => 
-                        q.eq("categoryId", cat._id).eq("status", "active")
-                    )
-                    .collect() 
-
                 return {
                     category: cat,
                     products: previewProducts,
-                    totalCount: allActiveProducts.length, 
+                    totalCount: cat.productCount ?? 0,
                 }
             })
         )
@@ -117,60 +111,71 @@ export const getLandingPageData = query({
 
 export const getFilteredProducts = query({
     args: {
-        page: v.number(),
-        pageSize: v.number(),
-        categoryId: v.optional(v.string()), 
+        paginationOpts: paginationOptsValidator,
+        categoryId: v.optional(v.string()),
         materialEn: v.optional(v.string()),
         colorEn: v.optional(v.string()),
+        minPrice: v.optional(v.number()),
+        maxPrice: v.optional(v.number()),
     },
     handler: async (ctx, args) => {
-        const sPage = Math.max(1, args.page)
-        const sPageSize = Math.min(Math.max(args.pageSize, 1), 100)
-
-        const validCategoryId = args.categoryId 
-            ? ctx.db.normalizeId("categories", args.categoryId) 
-            : null;
+        const validCategoryId = args.categoryId
+            ? ctx.db.normalizeId("categories", args.categoryId)
+            : null
 
         const searchMaterial = args.materialEn && PRODUCT_FILTERS.materials.some(
-            (m) => m.en.toLowerCase() === args.materialEn?.toLowerCase()
-        ) ? args.materialEn.toLowerCase() : undefined
+            m => m.en.toLowerCase() === args.materialEn.toLowerCase()
+        ) ? args.materialEn.toLowerCase() : null
 
         const searchColor = args.colorEn && PRODUCT_FILTERS.colors.some(
-            (c) => c.en.toLowerCase() === args.colorEn?.toLowerCase()
-        ) ? args.colorEn.toLowerCase() : undefined
+            c => c.en.toLowerCase() === args.colorEn.toLowerCase()
+        ) ? args.colorEn.toLowerCase() : null
 
-        let productQuery = ctx.db.query("products")
-
-        if (validCategoryId) {
-            productQuery = productQuery.withIndex("by_category_status", (q) =>
-                q.eq("categoryId", validCategoryId).eq("status", "active")
-            )
+        let dbQuery
+        if (validCategoryId && searchMaterial) {
+            dbQuery = ctx.db.query("products")
+                .withIndex("by_category_status_material", q =>
+                    q.eq("categoryId", validCategoryId).eq("status", "active").eq("materialKey", searchMaterial))
+        } else if (validCategoryId) {
+            dbQuery = ctx.db.query("products")
+                .withIndex("by_category_status", q =>
+                    q.eq("categoryId", validCategoryId).eq("status", "active"))
+        } else if (searchMaterial) {
+            dbQuery = ctx.db.query("products")
+                .withIndex("by_status_material", q =>
+                    q.eq("status", "active").eq("materialKey", searchMaterial))
         } else {
-            productQuery = productQuery.withIndex("by_status", (q) => q.eq("status", "active"))
+            dbQuery = ctx.db.query("products")
+                .withIndex("by_status", q => q.eq("status", "active"))
         }
 
-        const allActiveProducts = await productQuery.order("desc").collect()
+        if (args.minPrice !== undefined && args.maxPrice !== undefined) {
+            dbQuery = dbQuery.filter(q => q.and(
+                q.gte(q.field("price"), args.minPrice),
+                q.lte(q.field("price"), args.maxPrice)
+            ))
+        } else if (args.minPrice !== undefined) {
+            dbQuery = dbQuery.filter(q => q.gte(q.field("price"), args.minPrice))
+        } else if (args.maxPrice !== undefined) {
+            dbQuery = dbQuery.filter(q => q.lte(q.field("price"), args.maxPrice))
+        }
 
-        const filtered = allActiveProducts.filter((product) => {
-            const matchesMaterial = !searchMaterial || 
-                (product.details?.material?.en || "").toLowerCase().includes(searchMaterial)
+        if (!searchColor) {
+            return await dbQuery.order("desc").paginate(args.paginationOpts)
+        }
 
-            const matchesColor = !searchColor || 
-                (product.colors || []).some(c => 
-                    (c.name?.en || "").toLowerCase().includes(searchColor)
-                )
-
-            return matchesMaterial && matchesColor
+        const result = await dbQuery.order("desc").paginate({
+            ...args.paginationOpts,
+            numItems: args.paginationOpts.numItems * 4,
         })
 
-        const totalCount = filtered.length
-        const skip = (sPage - 1) * sPageSize
+        const filteredPage = result.page.filter(p =>
+            (p.colors || []).some(c => (c.name?.en || "").toLowerCase().includes(searchColor))
+        )
 
         return {
-            products: filtered.slice(skip, skip + sPageSize),
-            totalCount,
-            totalPages: Math.ceil(totalCount / sPageSize),
-            currentPage: sPage
+            ...result,
+            page: filteredPage.slice(0, args.paginationOpts.numItems),
         }
     }
 })

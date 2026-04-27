@@ -6,9 +6,9 @@ import { useLocale, useTranslations } from "next-intl"
 import Link from "next/link"
 
 const bgColors = [
-    "from-[#1c2840]/80",  
-    "from-foreground/70", 
-    "from-[#1c2840]/80", 
+    "from-[#1c2840]/90",
+    "from-foreground/85",
+    "from-[#1c2840]/90",
 ]
 
 export default function CategoryCard({ index, category, totalColumns }) {

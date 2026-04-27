@@ -12,10 +12,10 @@ export default function ProductCategoryCard({ category, products, idx, length })
     const t = useTranslations("productcategory")
 
     const distanceFromEnd = length - 1 - idx
-    const bgColor = distanceFromEnd % 2 === 0 ? 'bg-gray-100' : 'bg-white'
+    const bg = distanceFromEnd % 2 === 0 ? "bg-neutral-100/70" : "bg-white"
 
     return (
-        <div className={`w-full py-16 md:py-24 ${bgColor}`}>
+        <div className={`w-full py-16 md:py-24 border-b border-gray-200 ${bg}`}>
             <ContentWrapper>
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}

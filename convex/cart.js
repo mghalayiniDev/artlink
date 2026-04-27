@@ -89,7 +89,6 @@ export const addToCart = mutation({
 
         const { h, w, d } = args.dimensions
         if (h <= 0 || w <= 0 || d <= 0) return { success: false, message: "Dimensions must be greater than zero." }
-        if (h <= 0 || w <= 0 || d <= 0 || h > 500 || w > 500 || d > 100) return { success: false, message: "Dimensions are invalid or exceed factory limits." }
 
         if (args.color.code.length > 50 || args.color.name.en.length > 100 || args.color.name.ar.length > 100) {
             return { success: false, message: "Invalid color format." }
@@ -99,6 +98,21 @@ export const addToCart = mutation({
         if (!product) return { success: false, message: "Product not found." }
         if (product.status !== "active") return { success: false, message: "This product is currently unavailable." }
         if (product.stock < 1) return { success: false, message: "This product is out of stock." }
+
+        if (product.dimensionRange) {
+            const dr = product.dimensionRange
+            if (h < dr.h.min || h > dr.h.max) {
+                return { success: false, message: `Height must be between ${dr.h.min} and ${dr.h.max} cm.` }
+            }
+            if (w < dr.w.min || w > dr.w.max) {
+                return { success: false, message: `Width must be between ${dr.w.min} and ${dr.w.max} cm.` }
+            }
+            if (d < dr.d.min || d > dr.d.max) {
+                return { success: false, message: `Depth must be between ${dr.d.min} and ${dr.d.max} cm.` }
+            }
+        } else if (h > 500 || w > 500 || d > 100) {
+            return { success: false, message: "Dimensions are invalid or exceed factory limits." }
+        }
 
         const matchingColor = product.colors.find((c) => c.code === args.color.code)
         if (!matchingColor) return { success: false, message: "Invalid color selection for this product." }

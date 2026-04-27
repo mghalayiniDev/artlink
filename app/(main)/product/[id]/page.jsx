@@ -117,6 +117,19 @@ export default function ProductPage() {
             return toast.error(t("invalidDimensions") || "Dimensions must be valid numbers greater than zero.")
         }
 
+        if (product.dimensionRange) {
+            const dr = product.dimensionRange
+            if (h < dr.h.min || h > dr.h.max) {
+                return toast.error(t("heightOutOfRange", { min: dr.h.min, max: dr.h.max }))
+            }
+            if (w < dr.w.min || w > dr.w.max) {
+                return toast.error(t("widthOutOfRange", { min: dr.w.min, max: dr.w.max }))
+            }
+            if (d < dr.d.min || d > dr.d.max) {
+                return toast.error(t("depthOutOfRange", { min: dr.d.min, max: dr.d.max }))
+            }
+        }
+
         const fullColorObject = product.colors.find(c => c.code === selectedColor)
 
         if (!fullColorObject) {
@@ -343,47 +356,67 @@ export default function ProductPage() {
                                             {t('customDimensions')}
                                         </span>
 
-                                        <div className="grid md:grid-cols-3 gap-5 mt-7">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="height" className="text-xs uppercase tracking-wide text-muted-foreground">
-                                                    {t('height')} ({t("cm")})
-                                                </Label>
-                                                <Input
-                                                    id="height"
-                                                    type="number"
-                                                    placeholder="213"
-                                                    value={customHeight}
-                                                    onChange={(e) => setCustomHeight(e.target.value)}
-                                                    className="border-foreground/20 rounded-none py-4.5"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="width" className="text-xs uppercase tracking-wide text-muted-foreground">
-                                                    {t('width')} ({t("cm")})
-                                                </Label>
-                                                <Input
-                                                    id="width"
-                                                    type="number"
-                                                    placeholder="91"
-                                                    value={customWidth}
-                                                    onChange={(e) => setCustomWidth(e.target.value)}
-                                                    className="border-foreground/20 rounded-none py-4.5"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="depth" className="text-xs uppercase tracking-wide text-muted-foreground">
-                                                    {t('depth')} ({t("cm")})
-                                                </Label>
-                                                <Input
-                                                    id="depth"
-                                                    type="number"
-                                                    placeholder="4.5"
-                                                    value={customDepth}
-                                                    onChange={(e) => setCustomDepth(e.target.value)}
-                                                    className="border-foreground/20 rounded-none py-4.5"
-                                                />
-                                            </div>
-                                        </div>
+                                        {(() => {
+                                            const dr = product.dimensionRange
+                                            const hVal = customHeight !== '' ? Number(customHeight) : null
+                                            const wVal = customWidth  !== '' ? Number(customWidth)  : null
+                                            const dVal = customDepth  !== '' ? Number(customDepth)  : null
+                                            const hErr = dr && hVal !== null && (hVal < dr.h.min || hVal > dr.h.max)
+                                            const wErr = dr && wVal !== null && (wVal < dr.w.min || wVal > dr.w.max)
+                                            const dErr = dr && dVal !== null && (dVal < dr.d.min || dVal > dr.d.max)
+                                            return (
+                                                <div className="grid md:grid-cols-3 gap-5 mt-7">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="height" className="text-xs uppercase tracking-wide text-muted-foreground">
+                                                            {t('height')} ({t("cm")})
+                                                        </Label>
+                                                        <Input
+                                                            id="height"
+                                                            type="number"
+                                                            placeholder={dr ? `${dr.h.min}–${dr.h.max}` : "213"}
+                                                            value={customHeight}
+                                                            onChange={(e) => setCustomHeight(e.target.value)}
+                                                            className={`rounded-none py-4.5 ${hErr ? "border-red-400 focus-visible:ring-red-300" : "border-foreground/20"}`}
+                                                        />
+                                                        <p className={`text-[0.7rem] ${hErr ? "text-red-500 font-medium" : "text-muted-foreground"}`}>
+                                                            {dr ? `${dr.h.min}–${dr.h.max} ${t("cm")}` : ""}
+                                                        </p>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="width" className="text-xs uppercase tracking-wide text-muted-foreground">
+                                                            {t('width')} ({t("cm")})
+                                                        </Label>
+                                                        <Input
+                                                            id="width"
+                                                            type="number"
+                                                            placeholder={dr ? `${dr.w.min}–${dr.w.max}` : "91"}
+                                                            value={customWidth}
+                                                            onChange={(e) => setCustomWidth(e.target.value)}
+                                                            className={`rounded-none py-4.5 ${wErr ? "border-red-400 focus-visible:ring-red-300" : "border-foreground/20"}`}
+                                                        />
+                                                        <p className={`text-[0.7rem] ${wErr ? "text-red-500 font-medium" : "text-muted-foreground"}`}>
+                                                            {dr ? `${dr.w.min}–${dr.w.max} ${t("cm")}` : ""}
+                                                        </p>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="depth" className="text-xs uppercase tracking-wide text-muted-foreground">
+                                                            {t('depth')} ({t("cm")})
+                                                        </Label>
+                                                        <Input
+                                                            id="depth"
+                                                            type="number"
+                                                            placeholder={dr ? `${dr.d.min}–${dr.d.max}` : "4.5"}
+                                                            value={customDepth}
+                                                            onChange={(e) => setCustomDepth(e.target.value)}
+                                                            className={`rounded-none py-4.5 ${dErr ? "border-red-400 focus-visible:ring-red-300" : "border-foreground/20"}`}
+                                                        />
+                                                        <p className={`text-[0.7rem] ${dErr ? "text-red-500 font-medium" : "text-muted-foreground"}`}>
+                                                            {dr ? `${dr.d.min}–${dr.d.max} ${t("cm")}` : ""}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )
+                                        })()}
 
                                         <div className="space-y-2 mt-7">
                                             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -508,6 +541,22 @@ export default function ProductPage() {
                                                         <span className="text-muted-foreground text-[0.8rem] font-medium">{t('category')}</span>
                                                         <span className="text-foreground text-[0.8rem]">{product.categoryDetails.name[locale] || product.categoryDetails.name["en"]}</span>
                                                     </div>
+                                                    {product.dimensionRange && (
+                                                        <div className="flex flex-col gap-3 md:flex-row md:justify-between py-2 border-b border-foreground/5">
+                                                            <span className="text-muted-foreground text-[0.8rem] font-medium">{t('dimensionRange')}</span>
+                                                            <span className="text-foreground text-[0.8rem] font-mono">
+                                                                H {product.dimensionRange.h.min}–{product.dimensionRange.h.max} &nbsp;
+                                                                W {product.dimensionRange.w.min}–{product.dimensionRange.w.max} &nbsp;
+                                                                D {product.dimensionRange.d.min}–{product.dimensionRange.d.max} {t("cm")}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    {product.leadTimeDays && (
+                                                        <div className="flex flex-col gap-3 md:flex-row md:justify-between py-2 border-b border-foreground/5">
+                                                            <span className="text-muted-foreground text-[0.8rem] font-medium">{t('leadTime')}</span>
+                                                            <span className="text-foreground text-[0.8rem]">{product.leadTimeDays} {t("days")}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </TabsContent>
                                             <TabsContent value="features" className="mt-6">

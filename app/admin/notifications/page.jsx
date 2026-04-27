@@ -1,256 +1,176 @@
 "use client"
 
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { api } from "@/convex/_generated/api"
 import { usePaginatedQuery } from "convex/react"
-import { Bell, Loader, Search } from "lucide-react"
+import { Bell, Loader2, Search } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useDeferredValue, useState } from "react"
+
+const TH = "py-3 px-5 text-left text-[0.68rem] font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap"
+const TD = "py-4 px-5 text-xs font-medium text-gray-700"
+
+const TYPE_STYLES = {
+    order_status: "bg-blue-50 text-blue-700 border-blue-200",
+    promotion:    "bg-orange-50 text-orange-700 border-orange-200",
+    alert:        "bg-amber-50 text-amber-700 border-amber-200",
+    inventory:    "bg-orange-50 text-orange-700 border-orange-200",
+}
 
 export default function AdminNotifications() {
     const t = useTranslations("admin")
     const [search, setSearch] = useState("")
     const [typeFilter, setTypeFilter] = useState("")
     const locale = useLocale()
-
     const deferredSearch = useDeferredValue(search)
 
     const { results, status, loadMore, isLoading } = usePaginatedQuery(
         api.admin.getAdminNotifications,
-        { 
-            search: deferredSearch || undefined, 
-            typeFilter: (typeFilter && typeFilter !== "all") ? typeFilter : undefined
+        {
+            search: deferredSearch || undefined,
+            typeFilter: (typeFilter && typeFilter !== "all") ? typeFilter : undefined,
         },
         { initialNumItems: 10 },
     )
 
-    const filters = [
-        {
-            val: "order_status",
-            label: t("order_status")
-        },
-        {
-            val: "promotion",
-            label: t("promotion")
-        },
-        {
-            val: "alert",
-            label: t("alert")
-        }
-    ]
-
-    const notificationTypes = {
-        "alert": t("alert"),
-        "order_status": t("order_status"),
-        "promotion": t("promotion"),
-        "inventory": t("inventory")
-    }
+    const formatDate = (ts) =>
+        new Date(ts).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })
 
     return (
-        <>
+        <div className="space-y-6">
+
             {/* Header */}
-            <div className="space-y-1.5">
-                <div className="flex items-center gap-5">
-                    <Bell className="w-7 h-7 text-orange-500" />
-                    <span className="text-3xl font-bold text-foreground block">{t('notifications')}</span>
-                </div>
-                <p className="text-muted-foreground flex items-center gap-3">
-                    {isLoading ? (
-                        <Loader className="w-5 h-5 text-orange-500 animate-spin" />
-                    ) : (
-                        results.length
-                    )} {" "}
-                    {t('totalNotifications')}
+            <div>
+                <p className="text-2xl font-bold text-gray-900">{t("notifications")}</p>
+                <p className="text-xs text-gray-400 mt-1 flex items-center gap-1.5">
+                    {isLoading
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <span className="font-semibold text-gray-600">{results.length}</span>
+                    }
+                    {t("totalNotifications")}
                 </p>
             </div>
 
-            {/* Search and Filters */}
-            <div className="flex flex-col sm:flex-row gap-4 my-8">
-                <div className="relative flex-1 max-w-md">
-                    <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                     <Input
-                        placeholder={t('search')} 
-                        className="ps-10 h-11! bg-white"
+                        placeholder={t("search")}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
+                        className="pl-9 h-11 bg-white border-gray-200 text-sm focus-visible:ring-orange-200 focus:border-orange-400"
                     />
                 </div>
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="w-full sm:max-w-56 h-11! bg-white cursor-pointer focus:ring-orange-500 ps-6">
-                        <SelectValue placeholder={t('filterByType')} />
+                    <SelectTrigger className="w-full sm:w-44 !h-11 bg-white border-gray-200 text-sm cursor-pointer">
+                        <SelectValue placeholder={t("filterByType")} />
                     </SelectTrigger>
-                    <SelectContent position="popper" sideOffset={4} className="max-h-60 w-[--radix-select-trigger-width]">
-                        <SelectItem
-                            value={"all"}
-                            className="cursor-pointer text-[0.85rem] font-medium"
-                        >
-                            {t("noFilters")}
-                        </SelectItem>
-                        {filters.map((filter, idx) => (
-                            <SelectItem
-                                key={idx}
-                                value={filter.val}
-                                className="cursor-pointer text-[0.85rem] font-medium"
-                            >
-                                {filter.label}
-                            </SelectItem>
-                        ))}
+                    <SelectContent position="popper" sideOffset={4}>
+                        <SelectItem value="all" className="text-sm cursor-pointer">{t("noFilters")}</SelectItem>
+                        <SelectItem value="order_status" className="text-sm cursor-pointer">{t("order_status")}</SelectItem>
+                        <SelectItem value="promotion" className="text-sm cursor-pointer">{t("promotion")}</SelectItem>
+                        <SelectItem value="alert" className="text-sm cursor-pointer">{t("alert")}</SelectItem>
+                        <SelectItem value="inventory" className="text-sm cursor-pointer">{t("inventory")}</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
 
-            {/* Notifications Table */}
-            <div className="rounded-md border bg-white overflow-hidden">
-                {/* This wrapper is the key for mobile responsiveness */}
-                <div className="relative w-full overflow-x-auto">
-                    <Table className="min-w-225 w-full border-collapse">
-                        <TableHeader className="bg-muted/50 hover:bg-muted/50">
-                            <TableRow>
-                                <TableHead className="min-w-48 font-bold text-start text-xs
-                                text-muted-foreground uppercase tracking-wider py-3.75 px-3 xl:px-6">
-                                    {t("notificationsTitle")}
-                                </TableHead>
-                                <TableHead className="min-w-45 font-bold text-start text-xs
-                                text-muted-foreground uppercase tracking-wider py-3.75 px-3 xl:px-6">
-                                    {t("notificationsMsg")}
-                                </TableHead>
-                                <TableHead className="min-w-30 font-bold text-start text-xs 
-                                text-muted-foreground uppercase tracking-wider py-3.75 px-3 xl:px-6">
-                                    # {t("notificationUserId")}
-                                </TableHead>
-                                <TableHead className="min-w-20 font-bold text-start text-xs 
-                                text-muted-foreground uppercase tracking-wider py-3.75 px-3 xl:px-6">
-                                    {t("notificationType")}
-                                </TableHead>
-                                <TableHead className="min-w-20 font-bold text-start text-xs 
-                                text-muted-foreground uppercase tracking-wider py-3.75 px-3 xl:px-6">
-                                    {t("notificationCreationDate")}
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
+            {/* Table */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-100">
+                                <th className={TH}>{t("notificationsTitle")}</th>
+                                <th className={TH}>{t("notificationsMsg")}</th>
+                                <th className={TH}>{t("notificationType")}</th>
+                                <th className={TH}>{t("notificationCreationDate")}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                             {isLoading ? (
-                                Array.from({ length: 10 }).map((_, idx) => (
-                                    <TableRow key={idx}>
-                                        <TableCell className="py-5 px-6"><div className="h-4 w-full bg-slate-200 animate-pulse rounded" /></TableCell>
-                                        <TableCell className="py-5 px-6"><div className="h-4 w-full bg-slate-200 animate-pulse rounded" /></TableCell>
-                                        <TableCell className="py-5 px-6"><div className="h-4 w-24 bg-slate-200 animate-pulse rounded" /></TableCell>
-                                        <TableCell className="py-5 px-6"><div className="h-4 w-16 bg-slate-200 animate-pulse rounded" /></TableCell>
-                                        <TableCell className="py-5 px-6"><div className="h-4 w-20 bg-slate-200 animate-pulse rounded" /></TableCell>
-                                    </TableRow>
+                                Array.from({ length: 8 }).map((_, i) => (
+                                    <tr key={i} className="border-b border-gray-50 last:border-0 animate-pulse">
+                                        <td className="py-4 px-5"><div className="h-3 w-32 bg-gray-100 rounded-full" /></td>
+                                        <td className="py-4 px-5"><div className="h-3 bg-gray-100 rounded-full" /></td>
+                                        <td className="py-4 px-5"><div className="h-5 w-20 bg-gray-100 rounded-lg" /></td>
+                                        <td className="py-4 px-5"><div className="h-3 w-20 bg-gray-100 rounded-full" /></td>
+                                    </tr>
+                                ))
+                            ) : results.length > 0 ? (
+                                results.map((n) => (
+                                    <tr key={n._id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition-colors">
+
+                                        {/* Title */}
+                                        <td className={`${TD} min-w-48 font-semibold text-gray-800`}>
+                                            {n.title[locale]}
+                                        </td>
+
+                                        {/* Body */}
+                                        <td className={`${TD} min-w-64 max-w-sm`}>
+                                            <p className="text-gray-500 truncate">{n.body[locale]}</p>
+                                        </td>
+
+                                        {/* Type badge */}
+                                        <td className={`${TD} min-w-32`}>
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[0.68rem] font-semibold border ${TYPE_STYLES[n.type] ?? TYPE_STYLES.alert}`}>
+                                                {t(n.type) || n.type}
+                                            </span>
+                                        </td>
+
+                                        {/* Date */}
+                                        <td className={`${TD} text-gray-400 whitespace-nowrap`}>
+                                            {formatDate(n._creationTime)}
+                                        </td>
+                                    </tr>
                                 ))
                             ) : (
-                                results.length > 0 ? (
-                                    results.map((result, idx) => (
-                                        <TableRow
-                                            key={idx}
-                                            className="hover:bg-white"
-                                        >
-                                            {/* Title - Language Sensitive */}
-                                            <TableCell className="min-w-48 text-start text-xs 
-                                            tracking-wider py-5 px-3 xl:px-6 font-medium whitespace-normal break-word leading-relaxed">
-                                                {result.title[locale]}
-                                            </TableCell>
-
-                                            {/* Description - Language Sensitive */}
-                                            <TableCell className="min-w-45 text-start text-xs 
-                                            tracking-wider py-5 px-3 xl:px-6 font-medium whitespace-normal wrap-break-word leading-relaxed">
-                                                {result.body[locale]}
-                                            </TableCell>
-
-                                            {/* User ID */}
-                                            <TableCell className="min-w-30 text-start text-xs 
-                                            tracking-wider py-5 px-3 xl:px-6 font-medium ">
-                                                {result.userId}
-                                            </TableCell>
-
-                                            {/* Type - Language Sensitive */}
-                                            <TableCell className="min-w-20 text-start text-xs 
-                                            tracking-wider py-5 px-3 xl:px-6 font-medium">
-                                                {notificationTypes[result.type] || notificationTypes["alert"]}
-                                            </TableCell>
-
-                                            <TableCell className="w-20 text-start text-xs 
-                                            tracking-wider py-5 px-3 xl:px-6 font-medium">
-                                                {new Date(result._creationTime).toLocaleDateString(locale, {
-                                                    day: 'numeric',
-                                                    month: 'short',
-                                                    year: 'numeric'
-                                                })}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : (
-                                    (typeFilter.trim().length === 0 && search.trim().length === 0) ? (
-                                        <TableRow>
-                                            <TableCell 
-                                                colSpan={5} 
-                                                className="h-64 text-center hover:bg-white"
-                                            >
-                                                <div className="flex flex-col items-center justify-center gap-2.5 text-muted-foreground">
-                                                    <Bell className="w-10 h-10 opacity-20" />
-                                                    <p className="text-lg font-medium">{t('noNotifications')}</p>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell 
-                                                colSpan={5} 
-                                                className="h-64 text-center hover:bg-white"
-                                            >
-                                                <div className="flex flex-col items-center justify-center gap-2.5 text-muted-foreground">
-                                                    <Bell className="w-10 h-10 opacity-20" />
-                                                    <p className="text-lg font-medium">{t('noNotifications')}</p>
-                                                    <button 
-                                                        className="text-sm bg-slate-100 px-6 py-2.25 font-semibold
-                                                    rounded-md cursor-pointer hover:bg-slate-200/70 text-gray-600"
-                                                        onClick={() => {
-                                                            setTypeFilter("")
-                                                            setSearch("")
-                                                        }}
-                                                    >
-                                                        {t('clearFilters')}
-                                                    </button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    )
-                                )
+                                <tr>
+                                    <td colSpan={4} className="py-16 text-center">
+                                        <div className="flex flex-col items-center gap-3 text-gray-300">
+                                            <Bell className="w-10 h-10" />
+                                            <p className="text-sm font-medium text-gray-400">{t("noNotifications")}</p>
+                                            {(typeFilter || search) && (
+                                                <button
+                                                    onClick={() => { setTypeFilter(""); setSearch("") }}
+                                                    className="mt-1 text-xs font-semibold text-orange-600 hover:text-orange-700 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50 transition-colors cursor-pointer"
+                                                >
+                                                    {t("clearFilters")}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
                             )}
-                        </TableBody>
-                    </Table>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            {/* Pagination / Load More */}
-            <div className="mt-6 flex flex-col items-center justify-center gap-4">
+            {/* Load more */}
+            <div className="flex flex-col items-center gap-3">
                 {status === "CanLoadMore" && (
                     <button
                         onClick={() => loadMore(10)}
                         disabled={isLoading}
-                        className="px-6 max-w-34 text-center w-full py-2.25 bg-white border rounded-sm text-[0.825rem] font-semibold text-orange-600
-                        hover:border-orange-200 transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-orange-50"
+                        className="px-6 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-600
+                        hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
                     >
-                        {t('loadMore')}
+                        {t("loadMore")}
                     </button>
                 )}
-
                 {status === "LoadingMore" && (
-                    <div className="flex items-center gap-2 text-muted-foreground text-sm font-medium">
-                        <Loader className="w-4 h-4 animate-spin text-orange-500" />
-                        {t('loading')}
+                    <div className="flex items-center gap-2 text-gray-400 text-sm">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {t("loading")}
                     </div>
                 )}
-
                 {status === "Exhausted" && results.length > 0 && (
-                    <p className="text-sm text-muted-foreground">
-                        {t('allLoaded')}
-                    </p>
+                    <p className="text-xs text-gray-400">{t("allLoaded")}</p>
                 )}
             </div>
-        </>
+        </div>
     )
 }

@@ -40,7 +40,8 @@ http.route({
                     "invoice",
                     "payment_intent",
                     "payment_intent.payment_method",
-                    "payment_intent.latest_charge"
+                    "payment_intent.latest_charge",
+                    "total_details.breakdown",  // needed for discount fallback reading
                 ]
             })
 
@@ -51,6 +52,26 @@ http.route({
             } catch (error) {
                 return new Response(`Server error: ${error.message}`, { status: 500 })
             }
+        }
+
+        // Release reservations when checkout is abandoned/expired
+        if (event.type === "checkout.session.expired") {
+            const session = event.data.object
+            if (session.metadata?.promoCodeId) {
+                try {
+                    await ctx.runMutation(internal.discounts.cancelDiscountReservation, {
+                        stripeSessionId: session.id,
+                    })
+                } catch {
+                    // Non-critical — pending records also have expiresAt for cleanup
+                }
+            }
+            // Stock release must succeed — do NOT catch. If this throws, we return 500
+            // so Stripe retries the webhook until it succeeds. Silently swallowing this
+            // error would leave stock permanently locked with no automatic recovery.
+            await ctx.runMutation(internal.reservations.releaseStockReservations, {
+                stripeSessionId: session.id,
+            })
         }
 
         return new Response(null, { status: 200 })
@@ -96,16 +117,17 @@ http.route({
 
             switch (type) {
                 case "user.created": {
-                    const { first_name, last_name, email_addresses, image_url } = data
+                    const { first_name, last_name, email_addresses, image_url, public_metadata } = data
                     const email = email_addresses[0]?.email_address
                     const name = `${first_name ?? ""} ${last_name ?? ""}`.trim()
+                    const role = public_metadata?.role === "admin" ? "admin" : "user"
 
                     await ctx.runMutation(internal.users.upsertFromClerk, {
                         userId: id,
                         name: name,
                         email: email,
                         imageURL: image_url,
-                        role: "user"
+                        role: role
                     })
 
                     await ctx.runMutation(internal.notifications.notifyAdmins, {
@@ -128,33 +150,18 @@ http.route({
                     const { first_name, last_name, email_addresses, image_url, public_metadata } = data
                     const email = email_addresses[0]?.email_address
                     const name = `${first_name ?? ""} ${last_name ?? ""}`.trim()
-                    const role = public_metadata?.role || "user"
+                    const role = public_metadata?.role === "admin" ? "admin" : "user"
 
-                    await ctx.runMutation(api.users.upsertFromClerk, {
+                    // upsertFromClerk already fires a notification if the role changed.
+                    // Skipping the generic "profile updated" notification here because
+                    // Clerk fires user.updated on every login (last_sign_in_at changes),
+                    // which would create one notification row per user session — unbounded growth.
+                    await ctx.runMutation(internal.users.upsertFromClerk, {
                         userId: id,
                         name: name,
                         email: email,
                         imageURL: image_url,
                         role: role
-                    })
-                    
-                    const newProfileDetails = `
-                        • Name: ${name}
-                        • Email: ${email}
-                        • Role: ${role}
-                    `.trim()
-
-                    await ctx.runMutation(internal.notifications.notifyAdmins, {
-                        userId: id,
-                        title: {
-                            en: `User Profile Updated: ${name} ✅`,
-                            ar: `تحديث بيانات المستخدم: ${name} ✅`
-                        },
-                        body: {
-                            en: `Current profile state:\n${newProfileDetails}`,
-                            ar: `البيانات الحالية: ${name} | ${email} | ${role}`
-                        },
-                        type: "alert"
                     })
 
                     break
@@ -177,6 +184,34 @@ http.route({
             return new Response("Internal Server Error", { status: 500 })
         }
     })
+})
+
+// Called when user clicks "Cancel" on the Stripe checkout page.
+// Stripe redirects to cancel_url — the Next.js route handler POSTs here.
+// Runs inside Convex where STRIPE_SECRET_KEY is available, so we can both
+// release reservations directly AND expire the Stripe session (which would
+// otherwise stay open for 30 min and fire its own webhook unnecessarily).
+http.route({
+    path: "/checkout-cancel",
+    method: "POST",
+    handler: httpAction(async (ctx, request) => {
+        const sessionId = new URL(request.url).searchParams.get("session_id")
+
+        if (sessionId) {
+            await ctx.runMutation(internal.reservations.releaseStockReservations, {
+                stripeSessionId: sessionId,
+            })
+            try {
+                await ctx.runMutation(internal.discounts.cancelDiscountReservation, {
+                    stripeSessionId: sessionId,
+                })
+            } catch {}
+            // Prevent completing payment on a stale browser tab
+            await stripe.checkout.sessions.expire(sessionId).catch(() => {})
+        }
+
+        return new Response(null, { status: 200 })
+    }),
 })
 
 export default http

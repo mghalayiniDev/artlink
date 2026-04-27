@@ -5,269 +5,296 @@ import ContentWrapper from "../ContentWrapper"
 import Logo from "../Logo"
 import Searchbar from "./Searchbar"
 import Link from "next/link"
-import { useEffect, useRef, useState } from "react"
-import { ChevronDown, Heart, Loader, Menu, ShoppingBag, X } from "lucide-react"
+import { useEffect, useState } from "react"
+import { ChevronDown, Heart, Loader, Menu, Search, ShoppingBag, X } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useIsMidScreen } from "@/hooks/useIsMidScreen"
 import { Authenticated, AuthLoading, Unauthenticated, useQuery } from "convex/react"
-import { UserButton, useUser } from "@clerk/clerk-react"
+import { UserButton } from "@clerk/clerk-react"
 import { usePathname } from "next/navigation"
 import { api } from "@/convex/_generated/api"
 
 export default function Navbar() {
     const t = useTranslations("header")
     const isMid = useIsMidScreen()
-    const pathname = usePathname() 
+    const pathname = usePathname()
+    const locale = useLocale()
+
+    const [isSearchOpen, setIsSearchOpen] = useState(false)
     const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
     const [isMenuOpen, setIsMenuOpen] = useState(false)
-    const categoriesRef = useRef(null)
-    const locale = useLocale()
-    const { user } = useUser()
 
     const currentUser = useQuery(api.users.getCurrentUser)
     const userLoading = currentUser === undefined
     const userError = currentUser === null
-
-    const isAdmin = user?.publicMetadata?.role === "admin"
+    const isAdmin = currentUser?.role === "admin"
 
     const categories = useQuery(api.categories.getAllCategories)
     const categoriesLoading = categories === undefined
     const categoriesError = categories === null
 
     const navLinks = [
-        { label: t("home"), href: "/" },
-        { label: t("shop"), href: "/shop" },
-        { label: t("about_us"), href: "/about" },
-        isAdmin && { label: t("admin"), href: "/admin" }
+        { label: t("home"),     href: "/"         },
+        { label: t("shop"),     href: "/shop"     },
+        { label: t("about_us"), href: "/about"    },
+        { label: t("contact"),  href: "/contact"  },
+        isAdmin && { label: t("admin"), href: "/admin" },
     ].filter(Boolean)
 
-    useEffect(() => {
-        if (!isMid) {
-            setIsMenuOpen(false)
-        }
-        const handleRouteChange = () => {
-            setIsMenuOpen(false)
-            setIsCategoriesOpen(false)
-        }
-        handleRouteChange()
-    }, [pathname, isMid])
+    const isActive = (href) =>
+        href === "/" ? pathname === "/" : pathname.startsWith(href)
 
+    // Close everything on route change
     useEffect(() => {
-        let ticking = false
-        const handleScroll = () => {
-            if (!ticking) {
-                window.requestAnimationFrame(() => {
-                    if (window.scrollY > 80) {
-                        setIsCategoriesOpen(false)
-                        if (isMenuOpen) setIsMenuOpen(false)
-                    }
-                    ticking = false
-                })
-                ticking = true
-            }
-        }
-        window.addEventListener("scroll", handleScroll)
-        return () => window.removeEventListener("scroll", handleScroll)
-    }, [isMenuOpen])
+        setIsMenuOpen(false)
+        setIsCategoriesOpen(false)
+        setIsSearchOpen(false)
+    }, [pathname])
+
+    // Close mobile menu when screen grows
+    useEffect(() => {
+        if (!isMid) setIsMenuOpen(false)
+    }, [isMid])
+
+
+    const cartCount  = currentUser?.cart?.length          ?? 0
+    const wishCount  = currentUser?.likedProducts?.length ?? 0
 
     return (
-        <nav 
-            className={`w-full bg-white ${isMenuOpen ? "border-0" : "border-b"} border-gray-300 h-20`}
-        >
-            <ContentWrapper className="h-full flex items-center justify-between gap-4 md:gap-12">
-                {/* Logo */}
-                <div className="shrink-0">
-                    <Logo 
-                        color="black"
-                    />
-                </div>
+        <>
+            <Searchbar isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
-                {/* Search */}
-                <div className="hidden md:block w-full">
-                    <Searchbar />
-                </div>
+            <nav className="w-full bg-white border-b border-gray-200">
+                <ContentWrapper className="h-[68px] flex items-center gap-4">
 
-                {/* Desktop Navigation */}
-                <div className="flex items-center gap-3 shrink-0">
-                    <div className="hidden lg:flex items-center gap-4">
+                    {/* ── Logo ── */}
+                    <div className="flex-1">
+                        <Logo variant="light" />
+                    </div>
+
+                    {/* ── Desktop nav (centred via flex-1 on both sides) ── */}
+                    <div className="hidden lg:flex items-center">
                         {navLinks.map((link, idx) => (
                             <Link
-                                href={link.href}
                                 key={idx}
-                                className="text-[0.8rem] xl:text-sm font-bold uppercase tracking-wide 
-                                text-foreground hover:text-[#d7803a] transition-colors"
+                                href={link.href}
+                                className={`relative w-fit px-3 py-2 text-[0.78rem] font-semibold uppercase tracking-widest
+                                rounded-lg transition-colors
+                                ${isActive(link.href)
+                                    ? "text-orange-500"
+                                    : "text-gray-700 hover:text-gray-900"
+                                }`}
                             >
                                 {link.label}
                             </Link>
                         ))}
-                    </div>
-                    {categoriesLoading && (
-                        <div className="w-20 h-6.5" />
-                    )}
-                    {/* Categories Dropdown */}
-                    {(!categoriesLoading && !categoriesError && (categories && categories.length > 0)) && (
-                        <div
-                            ref={categoriesRef}
-                            className="relative flex items-center h-full"
-                            onMouseEnter={() => setIsCategoriesOpen(true)}
-                            onMouseLeave={() => setIsCategoriesOpen(false)}
-                            onFocus={() => setIsCategoriesOpen(true)} 
-                            onBlur={(e) => {
-                                if (!e.currentTarget.contains(e.relatedTarget)) {
-                                    setIsCategoriesOpen(false)
-                                }
-                            }}
-                        >
-                            <button 
-                                className="text-[0.8rem] xl:text-sm font-bold uppercase tracking-wide text-foreground 
-                                transition-colors hover:text-[#d7803a] cursor-pointer items-center gap-1.25 hidden lg:flex"
-                                aria-expanded={isCategoriesOpen}
-                                aria-haspopup="true"
+
+                        {/* Categories */}
+                        {!categoriesLoading && !categoriesError && categories?.length > 0 && (
+                            <div
+                                className="relative"
+                                onMouseEnter={() => setIsCategoriesOpen(true)}
+                                onMouseLeave={() => setIsCategoriesOpen(false)}
                             >
-                                {t('categories')}
-                                <ChevronDown className="w-3.75 h-3.75" />
-                            </button>
-                            
-                            <AnimatePresence>
-                                {(!isMid && isCategoriesOpen) && (
-                                    <>
-                                        <div className="absolute top-full right-0 z-0 w-full h-9" />
+                                <button className={`flex items-center gap-1.5 px-3 py-2 text-[0.78rem] font-semibold
+                                    uppercase tracking-widest rounded-lg transition-colors cursor-pointer
+                                    ${isCategoriesOpen ? "text-orange-500" : "text-gray-700 hover:text-gray-900"}`}
+                                    aria-expanded={isCategoriesOpen}
+                                >
+                                    {t("categories")}
+                                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200
+                                        ${isCategoriesOpen ? "rotate-180 text-orange-500" : ""}`}
+                                    />
+                                </button>
+
+                                <AnimatePresence>
+                                    {isCategoriesOpen && !isMid && (
                                         <motion.div
-                                            key="categories-dropdown"
-                                            initial={{ opacity: 0, y: 4 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: 4 }}
-                                            transition={{ duration: 0.15 }}
-                                            className="absolute top-9 right-0 bg-background border border-foreground z-50 min-w-50 max-h-50 overflow-y-auto"
+                                            initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                                            transition={{ duration: 0.15, ease: "easeOut" }}
+                                            className="absolute top-[calc(100%+10px)] left-1/2 -translate-x-1/2
+                                            bg-white rounded-2xl shadow-2xl shadow-black/10
+                                            border border-gray-100 py-2 min-w-52 z-50"
                                         >
+                                            {/* Arrow */}
+                                            <div className="absolute -top-1.5 left-1/2 -translate-x-1/2
+                                                w-3 h-3 bg-white border-l border-t border-gray-100 rotate-45" />
+
                                             {categories.map((category) => (
                                                 <Link
                                                     key={category._id}
                                                     href={`/shop?category=${category._id}`}
-                                                    className="block px-5 py-3 text-[0.8rem] font-bold uppercase text-foreground hover:bg-neutral-100 
-                                                    hover:text-[#d7803a] transition-colors border-b border-foreground/10 last:border-0 font-mono whitespace-nowrap"
+                                                    className="flex items-center mx-1.5 px-3.5 py-2.5 rounded-xl
+                                                    text-[0.82rem] font-medium text-gray-600
+                                                    hover:text-orange-500 hover:bg-orange-50 transition-colors whitespace-nowrap"
                                                 >
                                                     {category.name[locale] || category.name["en"]}
                                                 </Link>
                                             ))}
                                         </motion.div>
-                                    </>
-                                )}
-                            </AnimatePresence>
-                        </div>
-                    )}
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        )}
+                    </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center">
+                    {/* ── Right actions ── */}
+                    <div className="flex-1 flex items-center justify-end gap-0.5">
+
+                        {/* Search icon */}
+                        <button
+                            onClick={() => setIsSearchOpen(true)}
+                            className="w-9 h-9 flex items-center justify-center rounded-xl
+                            text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer"
+                            aria-label="Search"
+                        >
+                            <Search className="w-[18px] h-[18px]" />
+                        </button>
+
                         <Unauthenticated>
                             <Link
                                 href="/sign-in"
-                                className={`px-4 py-2 bg-orange-400 text-background text-[0.8rem] xl:text-sm font-bold 
-                                uppercase  hover:bg-orange-400/85 transition-colors ${locale === "ar" ? "font-cairo" : "font-mono"}`}
+                                className={`ml-1 px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white
+                                text-[0.75rem] font-bold uppercase tracking-widest rounded-lg
+                                transition-colors ${locale === "ar" ? "font-cairo" : ""}`}
                             >
                                 {t("sign-in")}
                             </Link>
                         </Unauthenticated>
+
                         <Authenticated>
-                            <UserButton>
-                                <UserButton.MenuItems>
-                                    <UserButton.Link
-                                        label={t("myOrders")}
-                                        labelIcon={<ShoppingBag size={15} />}
-                                        href="/orders"
-                                    />
-                                </UserButton.MenuItems>
-                            </UserButton>
                             {(!userLoading && !userError && currentUser) && (
-                                <div className="flex items-center">
-                                    <Link 
-                                        href="/wishlist" 
-                                        className="flex w-9 h-9 items-center justify-center rounded-lg text-muted-foreground 
-                                        hover:text-foreground hover:bg-secondary transition-colors relative"
+                                <>
+                                    {/* Wishlist */}
+                                    <Link
+                                        href="/wishlist"
+                                        className="relative w-9 h-9 flex items-center justify-center rounded-xl
+                                        text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
                                     >
-                                        <Heart size={18} />
-                                        <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 rounded-full bg-destructive 
-                                        text-neutral-100 text-[8px] flex items-center justify-center font-bold">{currentUser?.likedProducts?.length}</span>
+                                        <Heart className="w-[18px] h-[18px]" />
+                                        {wishCount > 0 && (
+                                            <span className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full
+                                            bg-orange-500 text-white text-[8px] font-bold
+                                            flex items-center justify-center leading-none">
+                                                {wishCount > 9 ? "9+" : wishCount}
+                                            </span>
+                                        )}
                                     </Link>
-                                    <Link 
-                                        href="/cart" 
-                                        className="w-9 h-9 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors relative"
+
+                                    {/* Cart */}
+                                    <Link
+                                        href="/cart"
+                                        className="relative w-9 h-9 flex items-center justify-center rounded-xl
+                                        text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
                                     >
-                                        <ShoppingBag size={18} />
-                                        <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 rounded-full bg-orange-500 
-                                        text-accent-foreground text-[8px] flex items-center justify-center font-bold">{currentUser?.cart?.length}</span>
+                                        <ShoppingBag className="w-[18px] h-[18px]" />
+                                        {cartCount > 0 && (
+                                            <span className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full
+                                            bg-orange-500 text-white text-[8px] font-bold
+                                            flex items-center justify-center leading-none">
+                                                {cartCount > 9 ? "9+" : cartCount}
+                                            </span>
+                                        )}
                                     </Link>
-                                </div>
+                                </>
                             )}
+
+                            <div className="ml-0.5">
+                                <UserButton>
+                                    <UserButton.MenuItems>
+                                        <UserButton.Link
+                                            label={t("myOrders")}
+                                            labelIcon={<ShoppingBag size={15} />}
+                                            href="/orders"
+                                        />
+                                    </UserButton.MenuItems>
+                                </UserButton>
+                            </div>
                         </Authenticated>
+
                         <AuthLoading>
-                            <Loader
-                                className="animate-spin text-[#db8b4a]"
-                                width={22}
-                                height={22}
-                            />
+                            <Loader className="animate-spin text-orange-400 ml-1" width={18} height={18} />
                         </AuthLoading>
-                        {/* Mobile Menu Toggle */}
+
+                        {/* Mobile toggle */}
                         <button
-                            className="lg:hidden cursor-pointer ml-1"
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            className="lg:hidden w-9 h-9 flex items-center justify-center rounded-xl
+                            text-gray-600 hover:bg-gray-100 transition-colors ml-1"
+                            aria-label="Menu"
                         >
-                            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                            <AnimatePresence mode="wait" initial={false}>
+                                {isMenuOpen
+                                    ? <motion.span key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                                        <X className="w-5 h-5" />
+                                      </motion.span>
+                                    : <motion.span key="menu" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                                        <Menu className="w-5 h-5" />
+                                      </motion.span>
+                                }
+                            </AnimatePresence>
                         </button>
                     </div>
-                </div>
-            </ContentWrapper>
+                </ContentWrapper>
 
-            {/* Mobile Menu */}
-            <AnimatePresence>
-                {(isMid && isMenuOpen) && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="lg:hidden bg-background border-b border-gray-300 overflow-hidden relative z-20"
-                    >
-                        <ContentWrapper className="pt-6 md:pt-2 pb-4 flex flex-col gap-4">
-                            {/* Mobile Search */}
-                            <div className="md:hidden mb-2">
-                                <Searchbar />
-                            </div>
+                {/* ── Mobile menu ── */}
+                <AnimatePresence>
+                    {isMid && isMenuOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.22, ease: "easeInOut" }}
+                            className="lg:hidden border-t border-gray-100 overflow-hidden bg-white"
+                        >
+                            <ContentWrapper className="py-4 space-y-0.5">
+                                {navLinks.map((link, idx) => (
+                                    <Link
+                                        key={idx}
+                                        href={link.href}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold
+                                        uppercase tracking-wider transition-colors
+                                        ${isActive(link.href)
+                                            ? "text-orange-500 bg-orange-50"
+                                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                        }`}
+                                    >
+                                        {isActive(link.href) && (
+                                            <span className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />
+                                        )}
+                                        {link.label}
+                                    </Link>
+                                ))}
 
-                            {/* Nav links */}
-                            {navLinks.map((link, idx) => (
-                                <Link
-                                    href={link.href}
-                                    key={idx}
-                                    className="text-sm font-bold uppercase tracking-wide text-foreground pt-2 pb-3 border-b border-gray-300"
-                                >
-                                    {link.label}
-                                </Link>
-                            ))}
-
-                            {/* Mobile Categories */}
-                            {(!categoriesLoading && !categoriesError && (categories && categories.length > 0)) && (
-                                <div className="py-2">
-                                    <span className="text-sm font-bold uppercase tracking-wide text-foreground">
-                                        {t('categories')}
-                                    </span>
-                                    <div className="mt-3 flex flex-wrap gap-2">
-                                        {categories.map((category, idx) => (
-                                            <Link
-                                                key={idx}
-                                                className="px-3 py-2 border border-foreground/20 text-[0.785rem] text-foreground bold
-                                                hover:border-[#d7803a] hover:text-[#d7803a] transition-colors font-mono"
-                                                href={`/shop?category=${category._id}`}
-                                            >
-                                                {category.name[locale] || category.name["en"]}
-                                            </Link>
-                                        ))}
+                                {!categoriesLoading && !categoriesError && categories?.length > 0 && (
+                                    <div className="pt-4 mt-2 border-t border-gray-100">
+                                        <p className="px-4 mb-3 text-[0.68rem] font-bold uppercase tracking-widest text-gray-400">
+                                            {t("categories")}
+                                        </p>
+                                        <div className="flex flex-wrap gap-2 px-1">
+                                            {categories.map((cat, idx) => (
+                                                <Link
+                                                    key={idx}
+                                                    href={`/shop?category=${cat._id}`}
+                                                    className="px-3.5 py-2 text-[0.78rem] font-medium text-gray-600
+                                                    border border-gray-200 rounded-xl hover:border-orange-300
+                                                    hover:text-orange-500 hover:bg-orange-50 transition-colors"
+                                                >
+                                                    {cat.name[locale] || cat.name["en"]}
+                                                </Link>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                        </ContentWrapper>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </nav>
+                                )}
+
+                                <div className="h-3" />
+                            </ContentWrapper>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </nav>
+        </>
     )
 }

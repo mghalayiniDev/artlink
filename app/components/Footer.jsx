@@ -47,18 +47,16 @@ export default function Footer() {
 
         try {
             const response = await subscribeToNewsletter({ email })
-            
-            setMessage(response.message)
-            
+            setMessage(t(response.messageKey))
             if (response.success) {
                 setEmail("")
                 setIsError(false)
             } else {
                 setIsError(true)
             }
-        } catch (error) {
+        } catch {
             setIsError(true)
-            setMessage(error instanceof Error ? error.message : "Something went wrong.")
+            setMessage(t("subscribeError"))
         } finally {
             setIsSubmitting(false)
 
@@ -82,6 +80,10 @@ export default function Footer() {
             {
                 name: t("shop"),
                 href: "/shop"
+            },
+            {
+                name: t("contact"),
+                href: "/contact"
             }
         ],
         industries: [

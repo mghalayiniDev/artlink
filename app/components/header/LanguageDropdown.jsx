@@ -33,20 +33,20 @@ export default function Languagedropdown({ color="white" }) {
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger 
+            <DropdownMenuTrigger
                 disabled={isPending}
-                className={`flex items-center gap-3 cursor-pointer text-white 
-                focus:outline-0 ${locale === "ar" ? "mr-auto" : "ml-auto"}`}
+                className={`flex items-center gap-3 cursor-pointer focus:outline-0 ${locale === "ar" ? "mr-auto" : "ml-auto"}`}
+                style={{ color }}
             >
-                <Image 
+                <Image
                     src={currentLang.icon}
                     alt={currentLang.alt}
                     width={15}
                     height={15}
                 />
-                <span 
+                <span
                     className={`uppercase font-medium ${locale === "ar" ? "text-sm" : "text-xs"}`}
-                    style={{ fontFamily: `var(--${currentLang.font})`, color: color }}
+                    style={{ fontFamily: `var(--${currentLang.font})` }}
                 >
                     {currentLang.name}
                 </span>

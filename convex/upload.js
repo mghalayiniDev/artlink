@@ -8,23 +8,29 @@ import { GoogleGenerativeAI } from "@google/generative-ai"
 import { v2 as cloudinary } from "cloudinary"
 
 const rateLimiter = new RateLimiter(components.rateLimiter, {
-    createCategory: { 
+    createCategory: {
         kind: "token bucket",
-        rate: 1,  
-        period: 100000,   
-        capacity: 2         
+        rate: 1,
+        period: 100000,
+        capacity: 2
     },
     updateCategory: {
         kind: "token bucket",
-        rate: 1,  
-        period: 100000,   
-        capacity: 2       
+        rate: 1,
+        period: 100000,
+        capacity: 2
     },
     createProduct: {
         kind: "token bucket",
-        rate: 1,  
-        period: 100000,   
-        capacity: 2       
+        rate: 1,
+        period: 100000,
+        capacity: 2
+    },
+    updateProduct: {
+        kind: "token bucket",
+        rate: 1,
+        period: 100000,
+        capacity: 2
     }
 })
 
@@ -54,18 +60,17 @@ export const createCategory = action({
             const identity = await ctx.auth.getUserIdentity()
             if (!identity) return { success: false, error: "You must be logged in" }
 
-            // 2. RATE LIMIT CHECK
-            const status = await rateLimiter.limit(ctx, "createCategory", { 
-                key: identity.subject 
-            })
-
-            if (!status.ok) {
-                return { success: false, message: "Too many requests. Please wait a moment." }
-            }
-
-            // 3. ADMIN CHECK
+            // 2. ADMIN CHECK — before rate limit so non-admins don't burn quota
             const isAdmin = await ctx.runQuery(internal.users.isAdmin, { userId: identity.subject })
             if (!isAdmin) return { success: false, error: "Unauthorized: Admin access required" }
+
+            // 3. RATE LIMIT CHECK
+            const status = await rateLimiter.limit(ctx, "createCategory", {
+                key: identity.subject
+            })
+            if (!status.ok) {
+                return { success: false, error: "Too many requests. Please wait a moment." }
+            }
 
             const { name, description, base64Image } = args
             if (name.trim().length < 2) return { success: false, error: "Name is too short" }
@@ -113,9 +118,9 @@ export const createCategory = action({
                 upload = await cloudinary.uploader.upload(base64Image, {
                     folder: "categories",
                     transformation: [
-                        { width: 1200, height: 1200, crop: "fill", gravity: "center" },
-                        { quality: "auto:best" }, 
-                        { fetch_format: "auto" }  
+                        { width: 600, height: 600, crop: "limit" },
+                        { quality: "auto:best" },
+                        { fetch_format: "auto" }
                     ]
                 })
             } catch (error) {
@@ -164,7 +169,14 @@ export const createProduct = action({
                 code: v.string(),
                 name: v.string()
             })
-        )
+        ),
+        dimensionRange: v.optional(v.object({
+            h: v.object({ min: v.number(), max: v.number() }),
+            w: v.object({ min: v.number(), max: v.number() }),
+            d: v.object({ min: v.number(), max: v.number() }),
+        })),
+        leadTimeDays: v.optional(v.number()),
+        isFeatured: v.optional(v.boolean()),
     },
     handler: async (ctx, args) => {
         try {
@@ -172,21 +184,20 @@ export const createProduct = action({
             const identity = await ctx.auth.getUserIdentity()
             if (!identity) return { success: false, error: "You must be logged in" }
 
-            // 2. RATE LIMIT CHECK
-            const status = await rateLimiter.limit(ctx, "createProduct", { 
-                key: identity.subject 
-            })
-
-            if (!status.ok) {
-                return { success: false, message: "Too many requests. Please wait a moment." }
-            }
-
-            // 3. ADMIN CHECK
+            // 2. ADMIN CHECK — before rate limit so non-admins don't burn quota
             const isAdmin = await ctx.runQuery(internal.users.isAdmin, { userId: identity.subject })
             if (!isAdmin) return { success: false, error: "Unauthorized: Admin access required" }
 
+            // 3. RATE LIMIT CHECK
+            const status = await rateLimiter.limit(ctx, "createProduct", {
+                key: identity.subject
+            })
+            if (!status.ok) {
+                return { success: false, error: "Too many requests. Please wait a moment." }
+            }
+
             // 4. VALIDATING FIELDS
-            const { name, description, base64Image, categoryId, price, discount, stock, material, dimensions, weight, features, colors } = args
+            const { name, description, base64Image, categoryId, price, discount, stock, material, dimensions, weight, features, colors, dimensionRange, leadTimeDays, isFeatured } = args
             if (name.trim().length < 2) return { success: false, error: "Name is too short" }
             if (description.trim().length < 20) return { success: false, error: "Description needs more detail" }
             if (!base64Image.startsWith("data:image")) return { success: false, error: "Invalid image format" }
@@ -194,10 +205,10 @@ export const createProduct = action({
             // FIXED: Added size check to prevent massive payloads from crashing the server
             if (base64Image.length > 7000000) return { success: false, error: "Image is too large (Max 5MB)" }
 
-            if (price < 0) return { success: false, error: "Price cannot be negative" }
-            if (discount < 0 || discount > 100) return { success: false, error: "Discount must be between 0 and 100" }
-            if (stock < 0) return { success: false, error: "Stock cannot be negative" }
-            if (weight <= 0) return { success: false, error: "Weight must be a positive number" }
+            if (!isFinite(price) || price <= 0) return { success: false, error: "Price must be a valid number greater than 0" }
+            if (!isFinite(discount) || discount < 0 || discount > 100) return { success: false, error: "Discount must be between 0 and 100" }
+            if (!isFinite(stock) || stock < 0 || !Number.isInteger(stock)) return { success: false, error: "Stock must be a valid whole number" }
+            if (!isFinite(weight) || weight <= 0) return { success: false, error: "Weight must be a valid number greater than 0" }
             if (dimensions.trim().length < 3) return { success: false, error: "Please provide valid dimensions (e.g., 10x20x30 cm)" }
             if (material.trim().length < 2) return { success: false, error: "Please specify the material" }
 
@@ -294,14 +305,17 @@ export const createProduct = action({
                 name: translations.name,
                 description: translations.description,
                 price,
-                discount, 
+                discount,
                 stock,
                 material: translations.material,
                 dimensions,
                 weight,
                 features: translations.features,
                 colors: translations.colors,
-                slug
+                slug,
+                dimensionRange,
+                leadTimeDays,
+                isFeatured,
             })
 
             return { success: true }     
@@ -312,12 +326,182 @@ export const createProduct = action({
     }
 })
 
+export const updateProduct = action({
+    args: {
+        id: v.id("products"),
+        name: v.string(),
+        description: v.string(),
+        base64Image: v.optional(v.string()),
+        categoryId: v.id("categories"),
+        price: v.number(),
+        discount: v.number(),
+        stock: v.number(),
+        material: v.string(),
+        dimensions: v.string(),
+        weight: v.number(),
+        features: v.array(v.string()),
+        colors: v.array(v.object({ code: v.string(), name: v.string() })),
+        dimensionRange: v.optional(v.object({
+            h: v.object({ min: v.number(), max: v.number() }),
+            w: v.object({ min: v.number(), max: v.number() }),
+            d: v.object({ min: v.number(), max: v.number() }),
+        })),
+        leadTimeDays: v.optional(v.number()),
+        isFeatured: v.optional(v.boolean()),
+    },
+    handler: async (ctx, args) => {
+        try {
+            const identity = await ctx.auth.getUserIdentity()
+            if (!identity) return { success: false, error: "You must be logged in" }
+
+            const isAdmin = await ctx.runQuery(internal.users.isAdmin, { userId: identity.subject })
+            if (!isAdmin) return { success: false, error: "Unauthorized: Admin access required" }
+
+            const status = await rateLimiter.limit(ctx, "updateProduct", { key: identity.subject })
+            if (!status.ok) return { success: false, error: "Too many requests. Please wait a moment." }
+
+            const { id, name, description, base64Image, categoryId, price, discount, stock, material, dimensions, weight, features, colors, dimensionRange, leadTimeDays, isFeatured } = args
+
+            if (name.trim().length < 2) return { success: false, error: "Name is too short" }
+            if (description.trim().length < 20) return { success: false, error: "Description needs more detail" }
+            if (base64Image && !base64Image.startsWith("data:image")) return { success: false, error: "Invalid image format" }
+            if (base64Image && base64Image.length > 7000000) return { success: false, error: "Image is too large (Max 5MB)" }
+            if (!isFinite(price) || price <= 0) return { success: false, error: "Price must be a valid number greater than 0" }
+            if (!isFinite(discount) || discount < 0 || discount > 100) return { success: false, error: "Discount must be between 0 and 100" }
+            if (!isFinite(stock) || stock < 0 || !Number.isInteger(stock)) return { success: false, error: "Stock must be a valid whole number" }
+            if (!isFinite(weight) || weight <= 0) return { success: false, error: "Weight must be a valid number greater than 0" }
+            if (dimensions.trim().length < 3) return { success: false, error: "Please provide valid dimensions" }
+            if (material.trim().length < 2) return { success: false, error: "Please specify the material" }
+
+            const validFeatures = features.filter(f => f.trim() !== "")
+            if (validFeatures.length === 0) return { success: false, error: "Please add at least one product feature" }
+            if (validFeatures.some(f => f.length > 200)) return { success: false, error: "One of your features is too long (max 200 chars)" }
+
+            const validColors = colors.filter(c => c.name.trim() !== "")
+            if (validColors.length === 0) return { success: false, error: "Please provide at least one color name" }
+
+            const hexRegex = /^#[0-9A-F]{6}$/i
+            if (validColors.some(c => !hexRegex.test(c.code))) return { success: false, error: "One of the color codes is invalid" }
+
+            const category = await ctx.runQuery(internal.admin.getCategoryById, { id: categoryId })
+            if (!category) return { success: false, error: "The selected category does not exist" }
+
+            const apiKey = process.env.GEMENI_API_KEY
+            if (!apiKey) throw new Error("Internal Server Error: AI Config missing")
+
+            const genAI = new GoogleGenerativeAI(apiKey)
+            const model = genAI.getGenerativeModel({
+                model: "gemini-2.5-flash-lite",
+                generationConfig: { responseMimeType: "application/json", temperature: 0.1 }
+            })
+
+            const colorInput = validColors.map(c => `${c.name} (Code: ${c.code})`).join(", ")
+            const prompt = `
+                You are a luxury e-commerce localization expert.
+                Translate the following product details into English and Arabic.
+                Arabic must be sophisticated, professional, and appealing to high-end shoppers.
+
+                INPUTS:
+                Name: ${name}
+                Description: ${description}
+                Material: ${material}
+                Features: ${validFeatures.join(", ")}
+                Colors: ${colorInput}
+
+                RETURN ONLY VALID JSON in this structure:
+                {
+                    "name": {"en": "...", "ar": "..."},
+                    "description": {"en": "...", "ar": "..."},
+                    "material": {"en": "...", "ar": "..."},
+                    "features": [{"en": "feature1", "ar": "ترجمة1"}, {"en": "feature2", "ar": "ترجمة2"}],
+                    "colors": [{ "name": {"en": "...", "ar": "..." }, code: "#hex" }]
+                }
+                IMPORTANT: The "code" field in the colors array must exactly match the hex codes provided in the INPUTS
+            `
+
+            let translations
+            try {
+                const aiResult = await model.generateContent(prompt)
+                translations = extractJSON(aiResult.response.text())
+            } catch (aiError) {
+                console.error("Translation logic failed:", aiError)
+                return { success: false, error: "AI failed to generate translations. Please try again" }
+            }
+
+            let thumbnailUrl = undefined
+            if (base64Image) {
+                cloudinary.config({
+                    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+                    api_key: process.env.CLOUDINARY_API_KEY,
+                    api_secret: process.env.CLOUDINARY_API_SECRET,
+                })
+
+                const existing = await ctx.runQuery(internal.admin.getProductRecord, { id })
+                if (existing?.thumbnail) {
+                    try {
+                        const afterUpload = existing.thumbnail.split("/upload/")[1]
+                        if (afterUpload) {
+                            const publicId = afterUpload.replace(/^v\d+\//, "").replace(/\.[^/.]+$/, "")
+                            await cloudinary.uploader.destroy(publicId)
+                        }
+                    } catch (error) {
+                        console.warn("Old image delete failed (non-fatal):", error.message)
+                    }
+                }
+
+                try {
+                    const upload = await cloudinary.uploader.upload(base64Image, {
+                        folder: "products",
+                        transformation: [
+                            { width: 1200, height: 1200, crop: "fill", gravity: "center" },
+                            { quality: "auto:best" },
+                            { fetch_format: "auto" }
+                        ]
+                    })
+                    thumbnailUrl = upload.secure_url
+                } catch (error) {
+                    console.error("Cloudinary Error:", error)
+                    return { success: false, error: "Image upload to CDN failed" }
+                }
+            }
+
+            const mutationArgs = {
+                id,
+                userId: identity.subject,
+                name: translations.name,
+                description: translations.description,
+                categoryId,
+                price,
+                discount,
+                stock,
+                material: translations.material,
+                dimensions,
+                weight,
+                features: translations.features,
+                colors: translations.colors,
+                dimensionRange,
+                leadTimeDays,
+                isFeatured,
+            }
+
+            if (thumbnailUrl) mutationArgs.thumbnail = thumbnailUrl
+
+            await ctx.runMutation(internal.admin.updateProductRecord, mutationArgs)
+
+            return { success: true }
+        } catch (error) {
+            console.error("Critical Action Error:", error.message)
+            return { success: false, error: "An unexpected server error occurred" }
+        }
+    }
+})
+
 export const updateCategory = action({
     args: {
         id: v.id("categories"),
-        name: v.optional(v.any()),
-        description: v.optional(v.any()),
-        base64Image: v.optional(v.any()),
+        name: v.optional(v.string()),
+        description: v.optional(v.string()),
+        base64Image: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         try {
@@ -325,18 +509,17 @@ export const updateCategory = action({
             const identity = await ctx.auth.getUserIdentity()
             if (!identity) return { success: false, error: "You must be logged in" }
 
-            // 2. RATE LIMIT CHECK
-            const status = await rateLimiter.limit(ctx, "updateCategory", { 
-                key: identity.subject 
-            })
-
-            if (!status.ok) {
-                return { success: false, message: "Too many requests. Please wait a moment." }
-            }
-
-            // 3. ADMIN CHECK
+            // 2. ADMIN CHECK — before rate limit so non-admins don't burn quota
             const isAdmin = await ctx.runQuery(internal.users.isAdmin, { userId: identity.subject })
             if (!isAdmin) return { success: false, error: "Unauthorized: Admin access required" }
+
+            // 3. RATE LIMIT CHECK
+            const status = await rateLimiter.limit(ctx, "updateCategory", {
+                key: identity.subject
+            })
+            if (!status.ok) {
+                return { success: false, error: "Too many requests. Please wait a moment." }
+            }
 
             let translations = undefined
 
@@ -450,5 +633,82 @@ export const updateCategory = action({
             console.error("Critical Action Error:", error.message)
             return { success: false, error: "An unexpected server error occurred" }
         }
+    }
+})
+
+export const deleteProduct = action({
+    args: { id: v.id("products") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity()
+        if (!identity) return { success: false, error: "You must be logged in" }
+
+        const isAdmin = await ctx.runQuery(internal.users.isAdmin, { userId: identity.subject })
+        if (!isAdmin) return { success: false, error: "Unauthorized: Admin access required" }
+
+        const product = await ctx.runQuery(internal.admin.getProductRecord, { id: args.id })
+        if (!product) return { success: false, error: "Product not found" }
+
+        // Delete from Cloudinary — extract public_id from URL
+        // URL format: https://res.cloudinary.com/{cloud}/image/upload/v{version}/products/{filename}.{ext}
+        try {
+            const afterUpload = product.thumbnail.split("/upload/")[1]
+            if (afterUpload) {
+                const withoutVersion = afterUpload.replace(/^v\d+\//, "")
+                const publicId = withoutVersion.replace(/\.[^/.]+$/, "")
+                cloudinary.config({
+                    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+                    api_key: process.env.CLOUDINARY_API_KEY,
+                    api_secret: process.env.CLOUDINARY_API_SECRET,
+                })
+                await cloudinary.uploader.destroy(publicId)
+            }
+        } catch (error) {
+            console.error("Cloudinary deletion failed:", error.message)
+            // Don't block DB deletion if Cloudinary fails
+        }
+
+        await ctx.runMutation(internal.admin.deleteProductRecord, {
+            id: args.id,
+            userId: identity.subject,
+        })
+
+        return { success: true }
+    }
+})
+
+export const deleteCategory = action({
+    args: { id: v.id("categories") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity()
+        if (!identity) return { success: false, error: "You must be logged in" }
+
+        const isAdmin = await ctx.runQuery(internal.users.isAdmin, { userId: identity.subject })
+        if (!isAdmin) return { success: false, error: "Unauthorized: Admin access required" }
+
+        const category = await ctx.runQuery(internal.admin.getCategoryRecord, { id: args.id })
+        if (!category) return { success: false, error: "Category not found" }
+
+        try {
+            const afterUpload = category.thumbnail.split("/upload/")[1]
+            if (afterUpload) {
+                const withoutVersion = afterUpload.replace(/^v\d+\//, "")
+                const publicId = withoutVersion.replace(/\.[^/.]+$/, "")
+                cloudinary.config({
+                    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+                    api_key: process.env.CLOUDINARY_API_KEY,
+                    api_secret: process.env.CLOUDINARY_API_SECRET,
+                })
+                await cloudinary.uploader.destroy(publicId)
+            }
+        } catch (error) {
+            console.error("Cloudinary deletion failed:", error.message)
+        }
+
+        await ctx.runMutation(internal.admin.deleteCategoryRecord, {
+            id: args.id,
+            userId: identity.subject,
+        })
+
+        return { success: true }
     }
 })

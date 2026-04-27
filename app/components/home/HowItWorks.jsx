@@ -10,31 +10,13 @@ export default function HowItWorks() {
     const t = useTranslations("process")
 
     const steps = [
-        {
-            number: '01',
-            icon: Ruler,
-            title: t('step1Title'),
-            description: t('step1Desc'),
-            image: "/process-1.jpg",
-        },
-        {
-            number: '02',
-            icon: Hammer,
-            title: t('step2Title'),
-            description: t('step2Desc'),
-            image: "/process-2.jpg",
-        },
-        {
-            number: '03',
-            icon: CheckCircle,
-            title: t('step3Title'),
-            description: t('step3Desc'),
-            image: "/process-3.jpg",
-        }
-    ];
+        { number: '01', icon: Ruler,       title: t('step1Title'), description: t('step1Desc'), image: "/process-1.jpg" },
+        { number: '02', icon: Hammer,      title: t('step2Title'), description: t('step2Desc'), image: "/process-2.jpg" },
+        { number: '03', icon: CheckCircle, title: t('step3Title'), description: t('step3Desc'), image: "/process-3.jpg" },
+    ]
 
     return (
-        <section className="w-full bg-background py-16 md:py-24 overflow-hidden">
+        <section className="w-full bg-white py-16 md:py-24 overflow-hidden">
             <ContentWrapper>
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
@@ -46,15 +28,15 @@ export default function HowItWorks() {
                     <span className="text-orange-500 font-bold text-sm tracking-widest block uppercase">
                         {t('sub')}
                     </span>
-                    <span className="font-heading font-extrabold uppercase text-4xl md:text-6xl text-foreground mt-4 block">
+                    <span className="font-heading font-extrabold uppercase text-4xl md:text-6xl text-gray-900 mt-4 block">
                         {t('title1')}<br />{t('title2')}
                     </span>
                 </motion.div>
 
-                {/* Steps Container */}
                 <div className="space-y-24 md:space-y-32">
                     {steps.map((step, idx) => {
                         const isEven = idx % 2 === 1
+                        const Icon   = step.icon
 
                         return (
                             <motion.div
@@ -65,21 +47,16 @@ export default function HowItWorks() {
                                 transition={{ duration: 0.6, delay: idx * 0.1 }}
                                 className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-18 items-center"
                             >
-                                {/* 1. Image */}
+                                {/* Image */}
                                 <div className={`relative w-full ${isEven ? 'md:order-2' : 'md:order-1'}`}>
-                                    {/* Decorative Background Frames */}
                                     <div className="absolute inset-0 bg-orange-100/60 rounded-2xl transform translate-x-4 translate-y-4 -z-10" />
                                     <div className="absolute inset-0 bg-orange-50/40 rounded-2xl transform translate-x-8 translate-y-8 -z-20" />
-
                                     <div className="relative">
-                                        {/* Step Number Badge */}
                                         <div className="absolute -top-4 -left-4 z-10 w-14 h-14 bg-orange-500 rounded-lg flex items-center justify-center shadow-lg">
                                             <span className="font-mono text-xl font-bold text-white">{step.number}</span>
                                         </div>
-
-                                        {/* Image wrapper with forced aspect ratio */}
                                         <div className="relative aspect-[1.35/1] w-full overflow-hidden rounded-xl shadow-2xl">
-                                            <Image 
+                                            <Image
                                                 src={step.image}
                                                 alt={step.title}
                                                 fill
@@ -92,28 +69,24 @@ export default function HowItWorks() {
                                 </div>
 
                                 {/* Content */}
-                                <div className={`flex flex-col space-y-4 ${isEven ? 'md:order-1' : 'md:order-2'}`}>
+                                <div className={`relative flex flex-col space-y-5 ${isEven ? 'md:order-1' : 'md:order-2'}`}>
+                                    {/* Ghost number */}
+                                    <span className="absolute -top-6 -left-2 text-[8rem] md:text-[10rem] font-extrabold text-gray-100 leading-none select-none pointer-events-none -z-10">
+                                        {step.number}
+                                    </span>
+
                                     {/* Icon */}
-                                    <div className="w-13 h-13 bg-neutral-100 border border-foreground/10 flex items-center justify-center mb-8">
-                                        <step.icon className="w-6 h-6 text-orange-500" />
+                                    <div className="w-12 h-12 bg-orange-50 border border-orange-100 rounded-2xl flex items-center justify-center">
+                                        <Icon className="w-5 h-5 text-orange-500" />
                                     </div>
-                                    <span className="font-extrabold uppercase text-2xl md:text-3xl text-foreground mb-4">
+
+                                    <span className="font-extrabold uppercase text-2xl md:text-3xl text-gray-900 leading-tight">
                                         {step.title}
                                     </span>
-                                    <p className="text-muted-foreground text-lg leading-relaxed max-w-md">
+
+                                    <p className="text-gray-500 text-base md:text-lg leading-relaxed max-w-md">
                                         {step.description}
                                     </p>
-                                    {/* Progress Indicators */}
-                                    <div className="flex gap-2 mt-6">
-                                        {steps.map((_, i) => (
-                                            <div
-                                                key={i}
-                                                className={`h-1 transition-all ${
-                                                    i === idx ? 'w-10 bg-orange-500' : 'w-6 bg-foreground/20'
-                                                }`}
-                                            />
-                                        ))}
-                                    </div>
                                 </div>
                             </motion.div>
                         )

@@ -1,233 +1,249 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { api } from "@/convex/_generated/api"
-import { usePaginatedQuery } from "convex/react"
-import { Bell, ChartColumnStacked, Loader, Pencil, Plus, Search, Trash2 } from "lucide-react"
+import { useAction, usePaginatedQuery } from "convex/react"
+import { Check, FolderTree, Loader2, Pencil, Plus, Search, Trash2, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useDeferredValue, useState } from "react"
 import { useLocale, useTranslations } from "use-intl"
+import { toast } from "sonner"
+
+const TH = "py-3 px-5 text-left text-[0.68rem] font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap"
+const TD = "py-4 px-5 text-xs font-medium text-gray-700 whitespace-nowrap"
 
 export default function Categories() {
-    const t = useTranslations("admin") 
+    const t = useTranslations("admin")
     const [search, setSearch] = useState("")
     const locale = useLocale()
-
     const deferredSearch = useDeferredValue(search)
+
+    const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+    const [deleting, setDeleting] = useState(false)
+    const deleteCategory = useAction(api.upload.deleteCategory)
 
     const { results, status, loadMore, isLoading } = usePaginatedQuery(
         api.admin.getAllCategories,
-        { 
-            search: deferredSearch || undefined, 
-        },
+        { search: deferredSearch || undefined },
         { initialNumItems: 10 },
     )
 
+    const handleDelete = async (id) => {
+        setDeleting(true)
+        try {
+            const result = await deleteCategory({ id })
+            if (result?.success === false) toast.error(result.error || t("deleteCategoryError"))
+            else toast.success(t("deleteCategorySuccess"))
+        } catch {
+            toast.error(t("deleteCategoryError"))
+        } finally {
+            setDeleting(false)
+            setConfirmDeleteId(null)
+        }
+    }
+
+    const formatDate = (ts) =>
+        new Date(ts).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })
+
     return (
-        <>
+        <div className="space-y-6">
+
             {/* Header */}
-            <div className="space-y-1.5">
-                <div className="flex md:items-center md:justify-between gap-6 md:flex-row flex-col">
-                    <div className="space-y-1.5">
-                        <div className="flex items-center gap-4">
-                            <ChartColumnStacked className="w-7 h-7 text-orange-500" />
-                            <span className="text-3xl font-bold text-foreground block">{t('categories')}</span>
-                        </div>
-                        <p className="text-muted-foreground flex items-center gap-3">
-                            {isLoading ? (
-                                <Loader className="w-5 h-5 text-orange-500 animate-spin" />
-                            ) : (
-                                results.length
-                            )} {" "}
-                            {t('totalCategories')}
-                        </p>
-                    </div>
-                    <Button asChild className="gap-2 w-full sm:w-auto h-10.5 bg-orange-500 hover:bg-orange-600/90">
-                        <Link href="/admin/categories/add">
-                            <Plus className="w-4 h-4" />
-                            {t('add_category')}
-                        </Link>
-                    </Button>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <p className="text-2xl font-bold text-gray-900">{t("categories")}</p>
+                    <p className="text-xs text-gray-400 mt-1 flex items-center gap-1.5">
+                        {isLoading
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <span className="font-semibold text-gray-600">{results.length}</span>
+                        }
+                        {t("totalCategories")}
+                    </p>
                 </div>
+                <Link
+                    href="/admin/categories/add"
+                    className="flex items-center gap-2 px-4 h-10 rounded-xl bg-orange-600 hover:bg-orange-700
+                    text-white text-sm font-medium transition-colors shadow-sm cursor-pointer w-fit"
+                >
+                    <Plus className="w-4 h-4" />
+                    {t("add_category")}
+                </Link>
             </div>
 
             {/* Search */}
-            <div className="relative flex-1 max-w-md my-8">
-                <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <div className="relative max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <Input
-                    placeholder={t('search')} 
-                    className="ps-10 h-11! bg-white"
+                    placeholder={t("search")}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9 h-11 bg-white border-gray-200 text-sm focus-visible:ring-orange-200 focus:border-orange-400"
                 />
             </div>
 
-            {/* Categories Table */}
-            <div className="rounded-md border bg-white overflow-hidden">
-                {/* This wrapper is the key for mobile responsiveness */}
-                <div className="relative w-full overflow-x-auto">
-                    <Table className="min-w-225 w-full border-collapse">
-                        <TableHeader className="bg-muted/50 hover:bg-muted/50">
-                            <TableRow>
-                                <TableHead className="min-w-40 font-bold text-start text-xs
-                                text-muted-foreground uppercase tracking-wider py-3.75 px-3 xl:px-6">
-                                    {t("name")}
-                                </TableHead>
-                                <TableHead className="min-w-70 font-bold text-start text-xs
-                                text-muted-foreground uppercase tracking-wider py-3.75 px-3 xl:px-6">
-                                    {t("description")}
-                                </TableHead>
-                                <TableHead className="min-w-20 font-bold text-start text-xs 
-                                text-muted-foreground uppercase tracking-wider py-3.75 px-3 xl:px-6">
-                                    {t("notificationCreationDate")}
-                                </TableHead>
-                                <TableHead className="min-w-20 font-bold text-start text-xs 
-                                text-muted-foreground uppercase tracking-wider py-3.75 px-3 xl:px-6">
-                                    {t("actions")}
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
+            {/* Table */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-100">
+                                <th className={TH}>{t("name")}</th>
+                                <th className={TH}>{t("description")}</th>
+                                <th className={TH}>{t("totalProducts")}</th>
+                                <th className={TH}>{t("notificationCreationDate")}</th>
+                                <th className={TH}>{t("actions")}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                             {isLoading ? (
-                                Array.from({ length: 10 }).map((_, idx) => (
-                                    <TableRow key={idx}>
-                                        <TableCell className="py-5 px-6"><div className="h-4 w-full bg-slate-200 animate-pulse rounded" /></TableCell>
-                                        <TableCell className="py-5 px-6"><div className="h-4 w-full bg-slate-200 animate-pulse rounded" /></TableCell>
-                                        <TableCell className="py-5 px-6"><div className="h-4 w-24 bg-slate-200 animate-pulse rounded" /></TableCell>
-                                        <TableCell className="py-5 px-6"><div className="h-4 w-16 bg-slate-200 animate-pulse rounded" /></TableCell>
-                                    </TableRow>
+                                Array.from({ length: 8 }).map((_, i) => (
+                                    <tr key={i} className="border-b border-gray-50 last:border-0 animate-pulse">
+                                        <td className="py-4 px-5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-lg bg-gray-100 shrink-0" />
+                                                <div className="space-y-1.5">
+                                                    <div className="h-3 w-24 bg-gray-100 rounded-full" />
+                                                    <div className="h-2.5 w-16 bg-gray-100 rounded-full" />
+                                                </div>
+                                            </div>
+                                        </td>
+                                        {[1, 2, 3, 4].map(j => (
+                                            <td key={j} className="py-4 px-5">
+                                                <div className="h-3 bg-gray-100 rounded-full" />
+                                            </td>
+                                        ))}
+                                    </tr>
                                 ))
-                            ) : (
-                                results.length > 0 ? (
-                                    results.map((result, idx) => (
-                                        <TableRow
-                                            key={idx}
-                                            className="hover:bg-white"
-                                        >
-                                            {/* Data - Language Sensitive */}
-                                            <TableCell className={`min-w-100 text-start text-[0.8rem] tracking-wider py-5 px-3 xl:px-6 
-                                                font-medium whitespace-normal break-word leading-relaxed`}>
-                                                <div className="flex items-center gap-5">
-                                                    <Image
-                                                        width={60}
-                                                        height={60}
-                                                        alt={result.name[locale]}
-                                                        src={result.thumbnail}
-                                                        className="rounded-md"
-                                                    />
-                                                    <div className="flex flex-col">
-                                                        <p className="font-semibold text-foreground truncate">{result.name[locale]}</p>
-                                                        <p className="text-gray-500 truncate text-[0.725rem]"># {result._id}</p>
-                                                    </div>
+                            ) : results.length > 0 ? (
+                                results.map((cat) => (
+                                    <tr key={cat._id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition-colors">
+
+                                        {/* Name + thumbnail */}
+                                        <td className={`${TD} min-w-52`}>
+                                            <div className="flex items-center gap-3">
+                                                <Image
+                                                    src={cat.thumbnail}
+                                                    alt={cat.name[locale]}
+                                                    width={40}
+                                                    height={40}
+                                                    className="rounded-lg object-cover shrink-0"
+                                                />
+                                                <div className="min-w-0">
+                                                    <p className="font-semibold text-gray-800 truncate">{cat.name[locale]}</p>
+                                                    <p className="text-[0.68rem] text-gray-400 font-mono truncate">#{cat._id.slice(-8)}</p>
                                                 </div>
-                                            </TableCell>
+                                            </div>
+                                        </td>
 
-                                            {/* Description - Language Sensitive */}
-                                            <TableCell className={`min-w-70 max-w-160 text-start text-[0.8rem] tracking-wider py-5 px-3 xl:px-6 
-                                                whitespace-normal break-word leading-relaxed`}>
-                                                {result.description[locale]}
-                                            </TableCell>
+                                        {/* Description */}
+                                        <td className={`${TD} max-w-xs`}>
+                                            <p className="truncate text-gray-500">{cat.description[locale]}</p>
+                                        </td>
 
-                                            {/* Date */}
-                                            <TableCell className={`min-w-35 font-semibold tracking-wider py-5 px-3 xl:px-6 
-                                            whitespace-normal break-word leading-relaxed`}>
-                                                {new Date(result._creationTime).toLocaleDateString(locale, {
-                                                    day: 'numeric',
-                                                    month: 'short',
-                                                    year: 'numeric'
-                                                })}
-                                            </TableCell>
+                                        {/* Total Products */}
+                                        <td className={TD}>
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-700">
+                                                {cat.productCount ?? 0}
+                                            </span>
+                                        </td>
 
-                                             {/* Actions */}
-                                            <TableCell className="min-w-25 py-3.75 px-3 xl:px-6">
-                                                <div className="flex items-center gap-2">
-                                                    <Button variant="ghost" size="icon" asChild className="h-8 w-8">
-                                                        <Link href={`/admin/categories/edit/${result._id}`}>
-                                                            <Pencil className="h-4 w-4" />
-                                                        </Link>
-                                                    </Button>
-                                                    <Button 
-                                                        variant="ghost" 
-                                                        size="icon" 
-                                                        className="h-8 w-8 text-destructive hover:text-destructive cursor-pointer"
+                                        {/* Date */}
+                                        <td className={`${TD} text-gray-400`}>
+                                            {formatDate(cat._creationTime)}
+                                        </td>
+
+                                        {/* Actions */}
+                                        <td className={TD}>
+                                            {confirmDeleteId === cat._id ? (
+                                                <div className="flex items-center gap-1.5">
+                                                    <button
+                                                        disabled={deleting}
+                                                        onClick={() => handleDelete(cat._id)}
+                                                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500 hover:bg-red-600
+                                                        text-white text-[0.68rem] font-semibold transition-colors cursor-pointer disabled:opacity-50"
                                                     >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : (
-                                    search.trim().length === 0 ? (
-                                        <TableRow>
-                                            <TableCell
-                                                colSpan={4} 
-                                                className="h-64 text-center hover:bg-white"
-                                            >
-                                                <div className="flex flex-col items-center justify-center gap-2.5 text-muted-foreground">
-                                                    <Bell className="w-10 h-10 opacity-20" />
-                                                    <p className="text-lg font-medium">{t('noCategories')}</p>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell 
-                                                colSpan={4} 
-                                                className="h-64 text-center hover:bg-white"
-                                            >
-                                                <div className="flex flex-col items-center justify-center gap-2.5 text-muted-foreground">
-                                                    <Bell className="w-10 h-10 opacity-20" />
-                                                    <p className="text-lg font-medium">{t('noCategories')}</p>
-                                                    <button 
-                                                        className="text-sm bg-slate-100 px-6 py-2.25 font-semibold
-                                                    rounded-md cursor-pointer hover:bg-slate-200/70 text-gray-600"
-                                                        onClick={() => {
-                                                            setSearch("")
-                                                        }}
+                                                        {deleting
+                                                            ? <Loader2 className="w-3 h-3 animate-spin" />
+                                                            : <Check className="w-3 h-3" />
+                                                        }
+                                                        {t("deleteCategory")}
+                                                    </button>
+                                                    <button
+                                                        disabled={deleting}
+                                                        onClick={() => setConfirmDeleteId(null)}
+                                                        className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100
+                                                        text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                                                     >
-                                                        {t('clearFilters')}
+                                                        <X className="w-3.5 h-3.5" />
                                                     </button>
                                                 </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    )
-                                )
+                                            ) : (
+                                                <div className="flex items-center gap-1">
+                                                    <Link
+                                                        href={`/admin/categories/edit/${cat._id}`}
+                                                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-orange-50
+                                                        text-gray-400 hover:text-orange-600 transition-colors"
+                                                    >
+                                                        <Pencil className="w-3.5 h-3.5" />
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => setConfirmDeleteId(cat._id)}
+                                                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50
+                                                        text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={5} className="py-16 text-center">
+                                        <div className="flex flex-col items-center gap-3 text-gray-300">
+                                            <FolderTree className="w-10 h-10" />
+                                            <p className="text-sm font-medium text-gray-400">{t("noCategories")}</p>
+                                            {search && (
+                                                <button
+                                                    onClick={() => setSearch("")}
+                                                    className="mt-1 text-xs font-semibold text-orange-600 hover:text-orange-700 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50 transition-colors cursor-pointer"
+                                                >
+                                                    {t("clearFilters")}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
                             )}
-                        </TableBody>
-                    </Table>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            {/* Pagination / Load More */}
-            <div className="mt-6 flex flex-col items-center justify-center gap-4">
+            {/* Load more */}
+            <div className="flex flex-col items-center gap-3">
                 {status === "CanLoadMore" && (
                     <button
                         onClick={() => loadMore(10)}
                         disabled={isLoading}
-                        className="px-6 max-w-34 text-center w-full py-2.25 bg-white border rounded-sm text-[0.825rem] font-semibold text-orange-600
-                        hover:border-orange-200 transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-orange-50"
+                        className="px-6 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-600
+                        hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
                     >
-                        {t('loadMore')}
+                        {t("loadMore")}
                     </button>
                 )}
-
                 {status === "LoadingMore" && (
-                    <div className="flex items-center gap-2 text-muted-foreground text-sm font-medium">
-                        <Loader className="w-4 h-4 animate-spin text-orange-500" />
-                        {t('loading')}
+                    <div className="flex items-center gap-2 text-gray-400 text-sm">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {t("loading")}
                     </div>
                 )}
-
                 {status === "Exhausted" && results.length > 0 && (
-                    <p className="text-sm text-muted-foreground">
-                        {t('allLoaded')}
-                    </p>
+                    <p className="text-xs text-gray-400">{t("allLoaded")}</p>
                 )}
             </div>
-        </>
+        </div>
     )
 }

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, query } from "./_generated/server"
+import { internal } from "./_generated/api"
 
 export const getOrderBySessionId = query({
     args: { 
@@ -79,19 +80,23 @@ export const createOrder = internalMutation({
         if (!user) throw new Error(`User not found for session ${session.id}`)
 
         const paymentIntent = session.payment_intent
-        
-        const paymentData = paymentIntent?.payment_method || paymentIntent?.latest_charge?.payment_method_details
-        
-        const paymentMethodType = paymentData?.type ?? "unknown"
 
-        const cardLast4 = 
-            paymentData?.card?.last4 ||      
-            paymentData?.link?.custom?.last4 ||  
-            paymentData?.apple_pay?.card?.last4 || 
-            paymentData?.google_pay?.card?.last4 ||
-            "unknown"
+        const pm  = paymentIntent?.payment_method
+        const pmd = paymentIntent?.latest_charge?.payment_method_details
 
-        const invoiceUrl = session.invoice?.hosted_invoice_url ?? undefined
+        const paymentMethodType = pm?.type ?? pmd?.type ?? "unknown"
+
+        const cardLast4 =
+            pm?.card?.last4 ||
+            pmd?.card?.last4 ||
+            pm?.apple_pay?.card?.last4 ||
+            pmd?.apple_pay?.card?.last4 ||
+            pm?.google_pay?.card?.last4 ||
+            pmd?.google_pay?.card?.last4 ||
+            pmd?.link?.card?.last4 ||
+            undefined
+
+        const invoiceUrl = session.invoice?.invoice_pdf ?? undefined
 
         const address = session.collected_information?.shipping_details?.address
         const shippingAddress = {
@@ -104,9 +109,14 @@ export const createOrder = internalMutation({
 
         const phone = session.customer_details?.phone ?? undefined
 
-        const discount = session.total_details?.breakdown?.discounts?.[0]
-        const discountAmount = discount ? discount.amount / 100 : undefined
-        const promoCodeText = discount?.discount?.coupon?.name ?? undefined
+        // Read discount from metadata (set at session creation — most reliable).
+        // Fall back to Stripe's total_details if metadata is missing.
+        const discountAmount = session.metadata?.discountAmount
+            ? parseFloat(session.metadata.discountAmount)
+            : ((session.total_details?.breakdown?.discounts?.[0]?.amount ?? 0) / 100) || undefined
+        const promoCodeText = session.metadata?.promoCode
+            ?? session.total_details?.breakdown?.discounts?.[0]?.discount?.coupon?.name
+            ?? undefined
 
         const totalAmount = session.amount_total / 100
         const vatCents = Math.round((session.amount_total / 1.05) * 0.05)
@@ -116,7 +126,12 @@ export const createOrder = internalMutation({
             throw new Error(`No cart items found in metadata for session ${session.id}`)
         }
 
-        const compressedCart = JSON.parse(session.metadata.cartItems)
+        let compressedCart
+        try {
+            compressedCart = JSON.parse(session.metadata.cartItems)
+        } catch {
+            throw new Error(`Malformed cartItems metadata for session ${session.id}`)
+        }
         if (!compressedCart || compressedCart.length === 0) throw new Error("Cart is empty at order creation")
 
         const totalRequestedPerProduct = {}
@@ -134,6 +149,10 @@ export const createOrder = internalMutation({
             
             productCache[productId] = product
         }
+
+        const maxLeadTimeDays = Math.max(
+            ...Object.values(productCache).map(p => p.leadTimeDays ?? 30)
+        )
 
         const products = []
         for (const item of compressedCart) {
@@ -160,14 +179,28 @@ export const createOrder = internalMutation({
             })
         }
 
-        for (const [productId, totalRequested] of Object.entries(totalRequestedPerProduct)) {
-            const product = productCache[productId]
-            await ctx.db.patch(product._id, {
-                stock: product.stock - totalRequested
-            })
+        // Confirm stock reservations created when the checkout session opened.
+        // Stock was already decremented at reservation time, so we just flip the status.
+        // Falls back to direct decrement for orders that pre-date the reservation system.
+        const reservations = await ctx.db
+            .query("stockReservations")
+            .withIndex("by_session", q => q.eq("stripeSessionId", session.id))
+            .collect()
+
+        if (reservations.length > 0) {
+            for (const r of reservations) {
+                if (r.status === "active") {
+                    await ctx.db.patch(r._id, { status: "confirmed" })
+                }
+            }
+        } else {
+            for (const [productId, totalRequested] of Object.entries(totalRequestedPerProduct)) {
+                const product = productCache[productId]
+                await ctx.db.patch(product._id, { stock: product.stock - totalRequested })
+            }
         }
 
-        await ctx.db.insert("orders", {
+        const orderId = await ctx.db.insert("orders", {
             userId: user._id,
             products,
             shippingAddress,
@@ -180,13 +213,47 @@ export const createOrder = internalMutation({
             discountAmount,
             promoCodeText,
             stripeSessionId: session.id,
+            maxLeadTimeDays,
             status: "paid",
             createdAt: Date.now(),
         })
 
+        await ctx.runMutation(internal.stats.patch, { totalOrders: 1, totalRevenue: totalAmount })
+
+        // Confirm the discount reservation (converts pending → confirmed, increments usedCount)
+        if (session.metadata?.promoCodeId && discountAmount) {
+            const normalizedId = ctx.db.normalizeId("discountCodes", session.metadata.promoCodeId)
+            if (normalizedId) {
+                await ctx.runMutation(internal.discounts.confirmDiscountUsage, {
+                    stripeSessionId: session.id,
+                    orderId,
+                    codeId:          normalizedId,
+                    userId:          session.metadata.userId,
+                    discountAmount,
+                })
+            }
+        }
+
         const purchasedProductIds = new Set(compressedCart.map(item => item.id))
         const remainingCart = user.cart.filter(item => !purchasedProductIds.has(item.productId))
 
-        await ctx.db.patch(user._id, { cart: remainingCart })
+        await ctx.db.patch(user._id, {
+            cart: remainingCart,
+            orderCount: (user.orderCount ?? 0) + 1,
+        })
+
+        await ctx.runMutation(internal.resend.sendOrderConfirmationEmail, {
+            email: user.email,
+            name: user.name,
+            sessionId: session.id,
+            products,
+            shippingAddress,
+            totalAmount,
+            vat,
+            discountAmount,
+            promoCodeText,
+            paymentMethod: paymentMethodType,
+            cardLast4,
+        })
     }
 })

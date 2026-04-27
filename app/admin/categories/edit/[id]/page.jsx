@@ -25,7 +25,7 @@ export default function EditCategoryPage({ params }) {
             <div className="space-y-1.5">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" asChild>
-                        <Link href="/admin/categories" className="hover:bg-orange-500/40">
+                        <Link href="/admin/categories" className="hover:bg-gray-100">
                             <ArrowLeft className="w-6 h-6" />
                         </Link>
                     </Button>
@@ -38,7 +38,7 @@ export default function EditCategoryPage({ params }) {
 
             {isCategoryLoading ? (
                 <div className="flex items-center justify-center h-64 max-w-2xl my-8">
-                    <Loader2 className="h-13 w-13 animate-spin text-orange-500" />
+                    <Loader2 className="h-10 w-10 animate-spin text-gray-400" />
                 </div>
             ) : (
                 categoryError ? (

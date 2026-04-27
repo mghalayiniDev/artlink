@@ -13,10 +13,10 @@ export default function ProductGallery({ categories, categoriesLoading, categori
     if (validPairs.length < 2) return null 
 
     return (
-        <section>
+        <section className="border-t border-gray-200">
             {validPairs.slice(0, 4).map((item, idx) => (
-                <ProductCategoryCard 
-                    key={item.category._id} 
+                <ProductCategoryCard
+                    key={item.category._id}
                     idx={idx}
                     category={item.category}
                     products={item.products}
